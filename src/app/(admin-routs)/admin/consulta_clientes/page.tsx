@@ -126,6 +126,10 @@ export default function Grid() {
 
     }
 
+    function teste() {
+
+    }
+
     function ajustaUrl() {
         router.push(urlBase + '?primeiro=' + getValues('primeiro') + '&linhas=' + getValues('linhas') + '&nome=' + getValues('nome') + '&cpf_cnpj=' + getValues('cpfCnpj'))
     }
