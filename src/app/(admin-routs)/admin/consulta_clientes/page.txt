@@ -1,0 +1,316 @@
+'use client'
+
+import React, { useEffect, useState, useRef } from 'react'
+
+import { getCrednetPP } from '@/actions/consulta_clientes/consulta_clientes'
+
+import Link from 'next/link'
+
+import { Button } from 'primereact/button'
+
+import { classNames } from 'primereact/utils'
+
+import { Controller, useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from "@hookform/resolvers/zod"
+
+import { Messages } from 'primereact/messages'
+import Loading from '@/components/loading'
+import PageTitle from '@/components/pageTitle'
+
+import { Divider } from 'primereact/divider'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { InputMask } from 'primereact/inputmask'
+import { InputTextarea } from 'primereact/inputtextarea'
+import uDados from '@/utils/uDados'
+import { consultaClientesType } from '@/types/consulta_clientes/consulta_clientes'
+import uData from '@/utils/uData'
+import uNumero from '@/utils/uNumeros'
+
+export default function Grid() {
+
+    const [isLoading, setIsLoading] = useState<Boolean>(false)
+    const messages = useRef<Messages>(null)
+    // const [dados, setDados] = useState<consultaClientesType[]>([])
+
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const pCpfCnpj = searchParams.get('cpfCnpj') || ''
+
+    const refCpfCnpj = useRef<any>(null)
+
+    const filtrosSchema = z.object({
+        primeiro: z.number(),
+        linhas: z.number(),
+        totalRegistros: z.number(),
+        id: z.number(),
+        cpfCnpj: z.string(),
+        resultadoConsulta: z.string(),
+    })
+
+    type filtrosType = z.infer<typeof filtrosSchema>
+
+    const { control, handleSubmit, reset, formState: { errors }, setValue, getValues } = useForm<filtrosType>({
+        resolver: zodResolver(filtrosSchema),
+        defaultValues: {
+            primeiro: 0,
+            linhas: 10,
+            totalRegistros: 0,
+            id: 0,
+            cpfCnpj: '',
+            resultadoConsulta: '',
+        }
+    })
+
+    async function consulta(filtros: filtrosType) {
+
+        setIsLoading(true)
+        const resposta = await getCrednetPP(filtros.cpfCnpj)
+        setIsLoading(false)
+
+        console.log('consulta: ', resposta.dados)
+
+        if (resposta.erro !== '') {
+            setIsLoading(false)
+            messages.current?.clear()
+            messages.current?.show({ id: '1', sticky: true, severity: 'error', summary: 'Erro', detail: resposta.erro, closable: false })
+            setValue('resultadoConsulta', '')
+        } else {
+            messages.current?.clear()
+            setIsLoading(false)
+
+            let texto = ''
+            texto = texto + 'ID da Consulta: ' + resposta.dados.ProtocoloB49C.IdConsulta
+            texto = texto + '\n'
+            texto = texto + 'Data Hora Consulta: ' + uData.formataDataHora(resposta.dados.ProtocoloB49C.DataHoraConsulta)
+            texto = texto + '\n'
+            texto = texto + 'Consta Ocorrência: ' + (resposta.dados.ProtocoloB49C.IsConstaOcorrencia ? 'Sim' : 'Não')
+            texto = texto + '\n'
+            texto = texto + 'Protesto Estadual: ' + (resposta.dados.ProtocoloB49C.IsProtestoEstadual ? 'Sim' : 'Não')
+            texto = texto + '\n'
+
+            texto = texto + 'Nome: ' + resposta.dados.ProtocoloB49C.N200_00_OUT.NomePessoa
+            texto = texto + '\n'
+            texto = texto + 'Situação do Documento: ' + resposta.dados.ProtocoloB49C.N200_00_OUT.SituacaoDocumento
+            texto = texto + '\n'
+            texto = texto + 'Data Situação: ' + uData.formataData(resposta.dados.ProtocoloB49C.N200_00_OUT.DataSituacao)
+            texto = texto + '\n'
+
+            if (filtros.cpfCnpj.length == 11) {
+
+                texto = texto + 'Data Nascimento: ' + uData.formataData(resposta.dados.ProtocoloB49C.N200_00_OUT.DataNascimento)
+                texto = texto + '\n'
+                texto = texto + 'Nome Mãe: ' + resposta.dados.ProtocoloB49C.N200_01_OUT.NomeMae
+                texto = texto + '\n'
+
+            } else {
+
+            }
+
+            texto = texto + '\n'
+            texto = texto + '<<<<<<<<<< Protestos >>>>>>>>>>'
+            texto = texto + '\n'
+            texto = texto + resposta.dados.ProtocoloB49C.N210_99_OUT.Mensagem
+            texto = texto + '\n'
+
+            texto = texto + '\n'
+            texto = texto + '<<<<<<<<<< Falencia/Recuperação Judicial >>>>>>>>>>'
+            texto = texto + '\n'
+            texto = texto + resposta.dados.ProtocoloB49C.N220_00_OUT
+            texto = texto + '\n'
+
+            texto = texto + '\n'
+            texto = texto + '<<<<<<<<<< Ações Judiciais >>>>>>>>>>'
+            texto = texto + '\n'
+            texto = texto + resposta.dados.ProtocoloB49C.N230_99_OUT.Mensagem
+            texto = texto + '\n'
+
+            texto = texto + '\n'
+            texto = texto + '<<<<<<<<<< Pendências Financeiras >>>>>>>>>>'
+            texto = texto + '\n'
+
+            if (resposta.dados.ProtocoloB49C.N240_00_OUTs_V) {
+
+                resposta.dados.ProtocoloB49C.N240_00_OUTs_V.map((item: any) => {
+                    console.log('item: ', item)
+                    texto = texto + 'Data Ocorrêmcia: ' + uData.formataData(item.DataOcorrencia)
+                    texto = texto + '\n'
+                    texto = texto + 'Modalidade: ' + item.Modalidade
+                    texto = texto + '\n'
+                    texto = texto + 'Avalista: ' + (item.Avalista ? 'Sim' : 'Não')
+                    texto = texto + '\n'
+                    texto = texto + 'Tipo de Moeda: ' + item.TipoMoeda
+                    texto = texto + '\n'
+                    texto = texto + 'Valor: ' + uNumero.formataNumero(item.Valor.toFixed(2), 2, false)
+                    texto = texto + '\n'
+                    texto = texto + 'Oringem: ' + item.Origem
+                    texto = texto + '\n'
+                    texto = texto + '----------------------------------------'
+                    texto = texto + '\n'
+                })
+
+            }
+
+            if (resposta.dados.ProtocoloB49C.N240_00_OUTs_5) {
+
+                resposta.dados.ProtocoloB49C.N240_00_OUTs_5.map((item: any) => {
+                    console.log('item: ', item)
+                    texto = texto + 'Data Ocorrêmcia: ' + uData.formataData(item.DataOcorrencia)
+                    texto = texto + '\n'
+                    texto = texto + 'Modalidade: ' + item.Modalidade
+                    texto = texto + '\n'
+                    texto = texto + 'Avalista: ' + (item.Avalista ? 'Sim' : 'Não')
+                    texto = texto + '\n'
+                    texto = texto + 'Tipo de Moeda: ' + item.TipoMoeda
+                    texto = texto + '\n'
+                    texto = texto + 'Valor: ' + uNumero.formataNumero(item.Valor.toFixed(2), 2, false)
+                    texto = texto + '\n'
+                    texto = texto + 'Oringem: ' + item.Origem
+                    texto = texto + '\n'
+                    texto = texto + '----------------------------------------'
+                    texto = texto + '\n'
+                })
+
+            }
+
+            texto = texto + '\n'
+            texto = texto + '<<<<<<<<<< Cheques sem Fundo >>>>>>>>>>'
+            texto = texto + '\n'
+            texto = texto + 'Total de Ocorrências: ' + resposta.dados.ProtocoloB49C.N250_90_OUT.TotalOcorrencia
+            texto = texto + '\n'
+            texto = texto + 'Data de Ocorrências Antigas: ' + resposta.dados.ProtocoloB49C.N250_90_OUT.DataOcorrenciaAntiga
+            texto = texto + '\n'
+            texto = texto + 'Data de Ocorrências Recentes: ' + resposta.dados.ProtocoloB49C.N250_90_OUT.DataOcorrenciaRecente
+            texto = texto + '\n'
+            texto = texto + 'Moeda: ' + resposta.dados.ProtocoloB49C.N250_90_OUT.Moeda
+            texto = texto + '\n'
+            texto = texto + 'Valor Total: ' + uNumero.formataNumero(resposta.dados.ProtocoloB49C.N250_90_OUT.ValorTotal.toFixed(2), 2, false)
+            texto = texto + '\n'
+
+            texto = texto + '<<<<<<<<<< Análise de Crédito >>>>>>>>>>'
+            texto = texto + '\n'
+            texto = texto + 'Serasa Score: ' + resposta.dados.ProtocoloB49C.N500_00_OUT
+            texto = texto + '\n'
+
+            //
+            setValue('resultadoConsulta', texto)
+
+        }
+
+    }
+
+    function handleConsultar() {
+
+        // if (uDados.validaCpfCnpj(getValues('cpfCnpj'))) {
+        //     messages.current?.clear()
+        //     handleSubmit(consulta)()
+        // } else {
+        //     messages.current?.clear()
+        //     messages.current?.show({ id: '1', sticky: true, severity: 'error', summary: 'Erro', detail: 'CPF/CNPJ inválido.', closable: false })
+        //     refCpfCnpj.current?.focus()
+        // }
+
+        handleSubmit(consulta)()
+
+    }
+
+    useEffect(() => {
+
+        setValue('cpfCnpj', pCpfCnpj)
+        setValue('resultadoConsulta', '')
+
+        // filtra(getValues())
+
+    }, [])
+
+    return (
+
+        <div className='mx-3'>
+
+            <PageTitle texto="Consulta de Clientes" />
+            {/* <PageSubTitle texto="Empresas" /> */}
+
+            <Divider />
+
+            <Messages ref={messages} />
+
+            <div className="flex justify-center mt-2 gap-2">
+
+                <form>
+
+                    <div className='flex flex-row gap-2'>
+
+                        <Controller
+                            name="cpfCnpj"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <InputMask
+                                        id={field.name}
+                                        value={field.value}
+                                        className={classNames({ 'p-invalid': fieldState.error })}
+                                        onChange={(e) => field.onChange(e.target.value)}
+                                        mask="99999999999?999"
+                                        placeholder="CPF/CNPJ"
+                                        autoFocus
+                                        ref={refCpfCnpj}
+                                    />
+                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+
+                                </>
+                            )}
+                        />
+
+                        <Button type='button' label="Consultar" icon="pi pi-search" onClick={handleConsultar} />
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div className="mt-2">
+
+                <div className="flex flex-col">
+                    <Controller
+                        name="resultadoConsulta"
+                        defaultValue=""
+                        control={control}
+                        render={({ field, fieldState }) => (
+                            <>
+                                <label htmlFor={field.name}>Resultado da Consulta</label>
+                                <InputTextarea
+                                    id={field.name}
+                                    value={field.value}
+                                    className={classNames({ 'p-invalid': fieldState.error })}
+                                    onChange={(e) => field.onChange(e.target.value)}
+                                    rows={15}
+                                    cols={30}
+                                />
+                                {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                            </>
+                        )}
+                    />
+                </div>
+
+
+                <Divider />
+
+                <div className="flex justify-center mt-2 gap-2">
+
+                    <Link href="/admin">
+                        <Button label="Início" icon="pi pi-home" />
+                    </Link>
+
+                </div>
+
+            </div>
+
+            {
+                isLoading && <Loading />
+            }
+
+        </div >
+
+    )
+}

@@ -1,0 +1,619 @@
+'use client'
+
+import { Controller, Form, useForm, useFieldArray } from 'react-hook-form'
+import { useRouter } from 'next/navigation'
+
+import { veiculosType, veiculosSchema, manutencaoType } from '@/types/veiculos/veiculos'
+import { codigoNomeType } from '@/types/sistema/codigoNome'
+import { postPut, getById } from '@/actions/veiculos/veiculos'
+
+import Link from "next/link";
+
+import { classNames } from 'primereact/utils';
+import { Button } from 'primereact/button';
+import { InputNumber } from 'primereact/inputnumber';
+import { InputText } from 'primereact/inputtext';
+import { Calendar } from 'primereact/calendar';
+import { Dropdown } from 'primereact/dropdown';
+
+import { zodResolver } from "@hookform/resolvers/zod"
+import React, { useState, useRef, useEffect } from 'react';
+
+import uData from '@/utils/uData';
+import { Messages } from 'primereact/messages';
+import Loading from '@/components/loading'
+import PageTitle from '@/components/pageTitle'
+import PageSubTitle from '@/components/pageSubTitle'
+
+import { AutoComplete, AutoCompleteChangeEvent, AutoCompleteCompleteEvent } from 'primereact/autocomplete'
+import { comboBoxType } from '@/types/sistema/combobox'
+import { getComboBox as matrizFiliaisGetComboBox } from '@/actions/basico/empresas'
+import { getComboBox as marcasGetComboBox } from '@/actions/veiculos/marcas'
+import { getComboBox as modelosGetComboBox } from '@/actions/veiculos/modelos'
+import { DataTable } from 'primereact/datatable'
+import { Column } from 'primereact/column'
+import { Divider } from 'primereact/divider'
+
+import { Dialog } from 'primereact/dialog'
+import FrmManutencao from './frmManutecao'
+import uTexto from '@/utils/uTexto'
+
+let idManutencao = 0
+
+export default function Formulario({ params }: { params: Promise<{ id: number }> }) {
+
+    const offSet = uData.consultaOffSet()
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState<Boolean>(false)
+    const messages = useRef<Messages>(null);
+    const [dados, setDados] = useState<veiculosType>({} as veiculosType)
+
+    // Manutenções
+    const [dialogoManutencao, setDialogoManutencao] = useState<boolean>(false);
+    const [dadosManutencao, setDadosManutencao] = useState<manutencaoType>({} as manutencaoType)
+    const [indiceManutencao, setIndiceManutencao] = useState<number>(0)
+
+    // autocompletar
+    const [listaMatrizFiliais, setListaMatrizFiliais] = useState<comboBoxType[]>([]);
+    const [matrizFilialSelecionada, setMatrizFilialSelecionada] = useState<comboBoxType>({} as comboBoxType);
+
+    const [listaMarcas, setListaMarcas] = useState<comboBoxType[]>([]);
+    const [marcaSelecionada, setMarcaSelecionada] = useState<comboBoxType>({} as comboBoxType);
+
+    const [listaModelos, setListaModelos] = useState<comboBoxType[]>([]);
+    const [modeloSelecionado, setModeloSelecionado] = useState<comboBoxType>({} as comboBoxType);
+
+    let urlRetorno = '/admin/veiculos/veiculos'
+
+    const { control, handleSubmit, formState: { errors }, setValue, getValues, trigger, watch } = useForm<veiculosType>({
+        defaultValues: dados,
+        values: dados,
+        mode: "onChange",
+        reValidateMode: "onChange",
+        shouldUnregister: false,
+        resolver: zodResolver(veiculosSchema)
+    })
+
+    const { fields, append, remove, update, insert } = useFieldArray({
+        control,
+        name: 'manutencoes',
+
+    })
+
+    async function buscaDados() {
+
+        setIsLoading(true)
+        const retorno = await getById((await params).id, offSet)
+
+        if (retorno?.erro) {
+            setIsLoading(false)
+            messages.current?.clear();
+            messages.current?.show({ id: '1', sticky: true, severity: 'error', summary: 'Erro', detail: retorno.erro, closable: false });
+            setDados({} as veiculosType)
+        } else {
+            messages.current?.clear();
+            setDados(retorno);
+            setIsLoading(false)
+        }
+
+    }
+
+    function incluiManutencao() {
+
+        const manutencao: manutencaoType = {
+            id: 0,
+            veiculo_id: dados.id,
+            data_manutencao: new Date(),
+            tipo: '',
+            km_manutencao: 0,
+            memorando: '',
+            usuario_sistema_id: 0,
+            usuario_sistema_nome: '',
+            data_hora: new Date(),
+            object_state: 'INSERTED'
+        }
+
+        setDadosManutencao(manutencao)
+        setDialogoManutencao(true)
+
+    }
+
+    const formValues = watch()
+
+    async function gravaManutencao(dadosRetorno: manutencaoType) {
+
+        if (dadosRetorno) {
+
+            if (dadosRetorno.id == 0) {
+
+                idManutencao = idManutencao - 1
+
+                dadosRetorno.id = idManutencao
+                dadosRetorno.object_state = 'INSERTED'
+
+                append(dadosRetorno)
+
+                setDados({
+                    ...formValues,
+                    manutencoes: !dados.manutencoes ? [dadosRetorno] : [...dados.manutencoes, dadosRetorno]
+                })
+
+            } else {
+
+                dadosRetorno.object_state = 'MODIFIED'
+
+                update(indiceManutencao, dadosRetorno)
+
+                setDados((dados) => ({
+                    ...dados,
+                    manutencoes: dados.manutencoes?.map((manutencao) =>
+                        manutencao.id === dadosRetorno.id ? dadosRetorno : manutencao
+                    ),
+                }));
+
+            }
+
+        }
+
+        setDialogoManutencao(false)
+
+    }
+
+    function gravar() {
+        // console.log('veiculosSchema.parse: ', veiculosSchema.parse(dados))
+        handleSubmit(onSubmit)()
+    }
+
+    async function onSubmit(dados: veiculosType) {
+
+        setIsLoading(true)
+        const retorno: any = await postPut(dados, offSet)
+        setIsLoading(false)
+
+        if (retorno?.erro) {
+            messages.current?.clear();
+            messages.current?.show({ id: '1', sticky: true, severity: 'error', summary: 'Erro', detail: retorno.erro, closable: false });
+        } else {
+            messages.current?.clear();
+            router.push(urlRetorno)
+        }
+
+    }
+
+    const codigoNomeStatus: codigoNomeType[] = [
+        { codigo: 'A', nome: 'Ativo' },
+        { codigo: 'I', nome: 'Inativo' },
+    ]
+
+    const formataDataManutencao = (manutencoes: manutencaoType) => {
+        return (
+            <>
+                {uData.formataData(manutencoes.data_manutencao)}
+            </>
+        )
+    }
+
+    const formataPreventivaCorretiva = (manutencoes: manutencaoType) => {
+        return (
+            <>
+                {uTexto.formataPreventivaCorretiva(manutencoes.tipo)}
+            </>
+        )
+    }
+
+    // autocompletar
+    const buscaMatrizFiliais = async (event: AutoCompleteCompleteEvent) => {
+        setListaMatrizFiliais((await matrizFiliaisGetComboBox(0, event.query)))
+    }
+
+    const buscaMarcas = async (event: AutoCompleteCompleteEvent) => {
+        setListaMarcas((await marcasGetComboBox(0, event.query)))
+    }
+
+    const buscaModelos = async (event: AutoCompleteCompleteEvent) => {
+        setListaModelos((await modelosGetComboBox(0, event.query)))
+    }
+
+    // autocompletar
+    async function preencheComboBox() {
+        setIsLoading(true)
+        setMatrizFilialSelecionada((await matrizFiliaisGetComboBox(getValues('matriz_filial_id'), ''))[0])
+        setMarcaSelecionada((await marcasGetComboBox(getValues('marca_id'), ''))[0])
+        setModeloSelecionado((await modelosGetComboBox(getValues('modelo_id'), ''))[0])
+        setIsLoading(false)
+    }
+
+    // autocompletar
+    useEffect(() => {
+        preencheComboBox()
+    }, [dados])
+
+    useEffect(() => {
+        buscaDados()
+    }, [])
+
+    return (
+
+        <div className="px-10">
+
+            <PageTitle texto="Veículos" />
+            <PageSubTitle texto="Cadastro de Veículos - Edição" />
+
+            <Divider />
+
+            <Messages ref={messages} />
+
+            <form>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <div className="flex flex-col">
+
+                        <h2 className='text-center'>Dados do Veículo</h2>
+
+                        {/* <form> */}
+
+                        <div className="grid grid-cols-1 gap-4">
+
+                            <div className='flex flex-col'>
+                                <Controller
+                                    name="id"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>ID</label>
+                                            <InputNumber
+                                                id={field.name}
+                                                inputRef={field.ref}
+                                                value={field.value}
+                                                onBlur={field.onBlur}
+                                                onValueChange={(e) => field.onChange(e)}
+                                                useGrouping={false}
+                                                inputClassName={classNames({ 'p-invalid': fieldState.error })}
+                                                disabled
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className='flex flex-col'>
+                                <Controller
+                                    name="matriz_filial_id"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Matriz/Filial</label>
+                                            <AutoComplete
+                                                id={field.name}
+                                                value={matrizFilialSelecionada}
+                                                field='nome'
+                                                inputId='id'
+                                                suggestions={listaMatrizFiliais}
+                                                completeMethod={buscaMatrizFiliais}
+                                                onChange={(e: AutoCompleteChangeEvent) => {
+                                                    setMatrizFilialSelecionada(e.value)
+                                                }}
+                                                onBlur={() => {
+                                                    setValue('matriz_filial_id', matrizFilialSelecionada?.id)
+                                                    if (getValues('matriz_filial_id')) {
+                                                        trigger(['matriz_filial_id'])
+                                                    }
+                                                }}
+                                                dropdown
+                                                autoFocus
+                                                className={classNames({ 'p-invalid': fieldState.error })}
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="marca_id"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Marca</label>
+                                            <AutoComplete
+                                                id={field.name}
+                                                value={marcaSelecionada}
+                                                field='nome'
+                                                inputId='id'
+                                                suggestions={listaMarcas}
+                                                completeMethod={buscaMarcas}
+                                                onChange={(e: AutoCompleteChangeEvent) => {
+                                                    setMarcaSelecionada(e.value)
+                                                }}
+                                                onBlur={() => {
+                                                    setValue('marca_id', marcaSelecionada?.id)
+                                                    if (getValues('marca_id')) {
+                                                        trigger(['marca_id'])
+                                                    }
+                                                }}
+                                                dropdown
+                                                className={classNames({ 'p-invalid': fieldState.error })}
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="modelo_id"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Modelo</label>
+                                            <AutoComplete
+                                                id={field.name}
+                                                value={modeloSelecionado}
+                                                field='nome'
+                                                inputId='id'
+                                                suggestions={listaModelos}
+                                                completeMethod={buscaModelos}
+                                                onChange={(e: AutoCompleteChangeEvent) => {
+                                                    setModeloSelecionado(e.value)
+                                                }}
+                                                onBlur={() => {
+                                                    setValue('modelo_id', modeloSelecionado?.id)
+                                                    if (getValues('modelo_id')) {
+                                                        trigger(['modelo_id'])
+                                                    }
+                                                }}
+                                                dropdown
+                                                className={classNames({ 'p-invalid': fieldState.error })}
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="placa"
+                                    defaultValue=""
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Placa</label>
+                                            <InputText
+                                                id={field.name}
+                                                value={field.value}
+                                                className={classNames({ 'p-invalid': fieldState.error })}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                maxLength={8}
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="ano_fabricacao"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Ano/Fabricação</label>
+                                            <InputNumber
+                                                id={field.name}
+                                                inputRef={field.ref}
+                                                value={field.value}
+                                                onBlur={field.onBlur}
+                                                onValueChange={(e) => field.onChange(e)} useGrouping={false}
+                                                inputClassName={classNames({ 'p-invalid': fieldState.error })}
+                                                minFractionDigits={0}
+                                            // maxFractionDigits={2}
+                                            // locale="de-BR"
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="km_atual"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Km Atual</label>
+                                            <InputNumber
+                                                id={field.name}
+                                                inputRef={field.ref}
+                                                value={field.value}
+                                                onBlur={field.onBlur}
+                                                onValueChange={(e) => field.onChange(e)} useGrouping={false}
+                                                inputClassName={classNames({ 'p-invalid': fieldState.error })}
+                                                minFractionDigits={0}
+                                            // maxFractionDigits={2}
+                                            // locale="de-BR"
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="km_proxima_manutencao"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Km Próxima Manutenção</label>
+                                            <InputNumber
+                                                id={field.name}
+                                                inputRef={field.ref}
+                                                value={field.value}
+                                                onBlur={field.onBlur}
+                                                onValueChange={(e) => field.onChange(e)} useGrouping={false}
+                                                inputClassName={classNames({ 'p-invalid': fieldState.error })}
+                                                minFractionDigits={0}
+                                            // maxFractionDigits={2}
+                                            // locale="de-BR"
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="status"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Status</label>
+                                            <Dropdown
+                                                id={field.name}
+                                                value={field.value}
+                                                optionLabel="nome"
+                                                optionValue="codigo"
+                                                options={codigoNomeStatus}
+                                                focusInputRef={field.ref}
+                                                onChange={(e) => field.onChange(e.value)}
+                                                className={classNames({ 'p-invalid': fieldState.error })}
+                                            // disabled
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="usuario_sistema_nome"
+                                    defaultValue=""
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Usuário/Sistema</label>
+                                            <InputText
+                                                id={field.name}
+                                                value={field.value}
+                                                className={classNames({ 'p-invalid': fieldState.error })}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                disabled
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                            <div className="flex flex-col">
+                                <Controller
+                                    name="data_hora"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <>
+                                            <label htmlFor={field.name}>Data/Hora</label>
+                                            <Calendar
+                                                inputId={field.name}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                dateFormat="dd/mm/yy"
+                                                className={classNames({ 'p-invalid': fieldState.error })}
+                                                showTime showSeconds hourFormat="24"
+                                                disabled
+                                            />
+                                            {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                        </>
+                                    )}
+                                />
+                            </div>
+
+                        </div>
+
+                        {/* </form> */}
+
+                    </div>
+
+                    <div className="flex flex-col">
+
+                        <h2 className='text-center'>Manutenções</h2>
+
+                        <DataTable value={dados.manutencoes} size="small" stripedRows showGridlines selectionMode="single" paginator rows={20} >
+
+                            <Column field="id" header="ID"></Column>
+                            <Column body={formataDataManutencao} header="Data Manutenção" ></Column>
+                            <Column body={formataPreventivaCorretiva} header="Tipo" ></Column>
+
+                            <Column header="Opções" body={(data, props) =>
+                                <div>
+
+                                    <Button
+                                        label='Editar'
+                                        icon="pi pi-pencil"
+                                        type='button'
+                                        size="small"
+                                        onClick={(e) => {
+                                            setDadosManutencao(data)
+                                            setIndiceManutencao(props.rowIndex)
+                                            setDialogoManutencao(true)
+                                        }}
+                                    >
+                                        {/* <span className="hidden sm:inline">Editar</span> */}
+                                        {/* <span className="sm:hidden"></span> */}
+                                    </Button>
+
+                                </div>
+                            }>
+                            </Column>
+
+                        </DataTable>
+
+                        <Button label="Incluir Manuteção" type="button" icon="pi pi-plus" onClick={incluiManutencao} />
+
+                        {/* <Button 
+                            label="Log" 
+                            type="button" 
+                            onClick={() => {
+                                console.log('dados.manutencoes:', dados.manutencoes)
+                                console.log('log:', dados)
+                            }}
+                        /> */}
+
+                    </div>
+
+                </div>
+
+            </form>
+
+            <Divider />
+
+            <div className="flex justify-center mt-2 gap-2">
+
+                <Button label="Gravar" type="button" icon="pi pi-check" onClick={gravar} />
+
+                <Link href={urlRetorno}>
+                    <Button label="Voltar" type="button" icon="pi pi-arrow-left" />
+                </Link>
+
+            </div>
+
+            <Dialog modal header="Manutenção" visible={dialogoManutencao} style={{ width: '80vw' }} onHide={() => { if (!dialogoManutencao) return; setDialogoManutencao(false); }}>
+                <FrmManutencao dadosEnvio={dadosManutencao} dadosRetorno={gravaManutencao} />
+            </Dialog>
+
+            {/* </form> */}
+
+            {
+                isLoading && <Loading />
+            }
+
+        </div>
+    )
+}

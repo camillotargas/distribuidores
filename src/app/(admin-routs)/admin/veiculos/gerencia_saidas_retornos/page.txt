@@ -1,0 +1,346 @@
+'use client'
+
+import React, { useEffect, useState, useRef } from 'react'
+
+import { getAll } from '@/actions/veiculos/saidas_retornos_veiculos'
+import { saidasRetornosVeiculosType } from '@/types/veiculos/saidas_retornos_veiculos'
+
+import Link from 'next/link';
+
+import { Button } from 'primereact/button'
+
+import { DataTable } from 'primereact/datatable'
+import { Column } from 'primereact/column'
+
+import ButtonEditar from '@/components/buttonEditar'
+import { classNames } from 'primereact/utils'
+
+import { Controller, useForm } from 'react-hook-form'
+import { z } from 'zod';
+import { zodResolver } from "@hookform/resolvers/zod"
+
+import { Messages } from 'primereact/messages'
+import Loading from '@/components/loading'
+import PageTitle from '@/components/pageTitle'
+import PageSubTitle from '@/components/pageSubTitle'
+
+import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator';
+import { InputText } from 'primereact/inputtext';
+import { Tag } from 'primereact/tag';
+import uData from '@/utils/uData';
+import ButtonAutorizar from '@/components/buttonAutorizar';
+import { comboBoxType } from '@/types/sistema/combobox';
+import { Dropdown } from 'primereact/dropdown';
+import { getComboBox as empresasGetComboBox } from '@/actions/basico/empresas'
+import { idNomeType } from '@/types/sistema/idNome';
+
+export default function Grid() {
+
+    const [dados, setDados] = useState<saidasRetornosVeiculosType[]>([]);
+    const [isLoading, setIsLoading] = useState<Boolean>(false);
+    const messages = useRef<Messages>(null);
+
+    const [linhasPorPagina, setLinhasPorPagina] = useState<number>(10);
+    const [pagina, setPagina] = useState<number>(0);
+    const [totalRegistros, setTotalRegistros] = useState<number>(0);
+
+    const [listaEmpresas, setListaEmpresas] = useState<comboBoxType[]>([]);
+
+    const [tipoBotao, setTipoBotao] = useState('E');
+
+    const botoesDataTable = (dados: saidasRetornosVeiculosType) => {
+
+        return (
+            <>
+
+                <Link href={`/admin/veiculos/gerencia_saidas_retornos/${dados.id}`} >
+                    {
+                        tipoBotao == 'E' ? <ButtonEditar /> : <ButtonAutorizar />
+                    }
+
+                </Link>
+
+                {/* <Link href={`/admin/veiculos/solicitacoes_saidas_veiculos/${dados.id}`} >
+                    <ButtonEditar />
+                </Link> */}
+
+                {/* <Link href={`/admin/veiculos/solicitacoes_saidas_veiculos/${dados.id}`} >
+                    <ButtonAutorizar />
+                </Link> */}
+
+            </>
+        );
+    }
+
+    const formataStatus = (dados: saidasRetornosVeiculosType) => {
+        return (
+            <>
+                <Tag value={dados.status == 'A' ? 'Ativo' : 'Inativo'} severity={dados.status == 'A' ? 'success' : 'danger'}></Tag>
+            </>
+        )
+    }
+
+    const formataSituacao = (dados: saidasRetornosVeiculosType) => {
+
+        switch (dados.situacao) {
+            case 1: return (<Tag value='Aguardando Autorização' severity='danger'></Tag>)
+            case 2: return (<Tag value='Autorizado' severity='success'></Tag>)
+            case 3: return (<Tag value='Saiu' severity='warning'></Tag>)
+            case 4: return (<Tag value='Retornou' severity='info'></Tag>)
+        }
+
+    }
+
+    const formataDataHoraPrevistaSaida = (dados: saidasRetornosVeiculosType) => {
+        return (
+            <>
+                {uData.formataDataHora(dados.dataHoraPrevistaSaida)}
+            </>
+        )
+    }
+
+    const idNomeSituacao: idNomeType[] = [
+        { id: 1, nome: 'Aguardando Autorização' },
+        { id: 2, nome: 'Autorizado' },
+        { id: 3, nome: 'Saiu' },
+        { id: 2, nome: 'Retornou' },
+    ];
+
+    const filtrosSchema = z.object({
+        empresa_id: z.number({ required_error: "Campo Obrigatório" }),
+        solicitante: z.string(),
+        autorizador: z.string(),
+        situacao: z.number({ required_error: "Campo Obrigatório" }),
+    })
+
+    type filtrosType = z.infer<typeof filtrosSchema>
+
+    const { control, handleSubmit, formState: { errors }, getValues } = useForm<filtrosType>({
+        resolver: zodResolver(filtrosSchema),
+        defaultValues: {
+            empresa_id: 0,
+            solicitante: '',
+            autorizador: '',
+            situacao: 1,
+        }
+    })
+
+    async function pesquisar(filtros: filtrosType) {
+
+        setIsLoading(true)
+        const resposta = await getAll(pagina, linhasPorPagina, filtros.empresa_id, filtros.solicitante, filtros.autorizador, filtros.situacao)
+        setIsLoading(false)
+
+        if (resposta?.erro) {
+            messages.current?.clear();
+            messages.current?.show({ id: '1', sticky: true, severity: 'error', summary: 'Erro', detail: resposta.erro, closable: false });
+            setDados([]);
+            setTotalRegistros(0)
+        } else {
+            messages.current?.clear();
+            setDados(resposta.dados);
+            setTotalRegistros(resposta.total_registros)
+        }
+
+    }
+
+    const onPageChange = (event: PaginatorPageChangeEvent) => {
+        setPagina(event.first)
+        setLinhasPorPagina(event.rows)
+    }
+
+    const buscaEmpresas = async () => {
+        setListaEmpresas((await empresasGetComboBox(0, '')))
+    }
+
+    // Após Carga dos Dados
+    useEffect(() => {
+
+        async function aposCargaDados() {
+
+            // setIsLoading(true)
+
+            // // Ajusta Visibilidade de Botões
+            // const lClaims = await getClaims()
+            // const lUsuarioSistemaId = lClaims.UsuarioSistemaId
+            // const lUsuario: usuariosSistemaType = await getByIdOpen(Number(lUsuarioSistemaId), 0)
+
+            // if ((lUsuario.administrador_sistema.toUpperCase() == 'S') || (lUsuario.aut_sai_ret_vei.toUpperCase() == 'S')) {
+            //     setTipoBotao('A')
+            // } else {
+            //     setTipoBotao('A')
+            // }
+
+            // setIsLoading(false)
+
+        }
+
+        aposCargaDados()
+
+    }, [dados])
+
+    useEffect(() => {
+        pesquisar(getValues())
+    }, [pagina, linhasPorPagina]);
+
+    useEffect(() => {
+        buscaEmpresas()
+        pesquisar(getValues())
+    }, [])
+
+    return (
+
+        <div className='mx-3'>
+
+            <PageTitle texto="Veículos" />
+            <PageSubTitle texto="Gerencia de Saídas e Retornos de Veículos" />
+
+            <Messages ref={messages} />
+
+            <div className="flex justify-center mt-2 gap-2">
+
+                <form onSubmit={handleSubmit(pesquisar)}>
+
+                    <div className='flex flex-row gap-2'>
+
+                        <Controller
+                            name="empresa_id"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <Dropdown
+                                        id={field.name}
+                                        value={field.value}
+                                        optionLabel="nome"
+                                        optionValue="id"
+                                        options={listaEmpresas}
+                                        focusInputRef={field.ref}
+                                        onChange={(e) => field.onChange(e.value)}
+                                        className={classNames({ 'p-invalid': fieldState.error })}
+                                        placeholder="Selecione a empresa"
+                                    />
+                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                </>
+                            )}
+                        />
+
+                        <Controller
+                            name="solicitante"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <InputText
+                                        id={field.name}
+                                        value={field.value}
+                                        className={classNames({ 'p-invalid': fieldState.error })}
+                                        onChange={(e) => field.onChange(e.target.value)}
+                                        maxLength={40}
+                                        autoFocus
+                                        placeholder='Solicitante'
+                                    />
+                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+
+                                </>
+                            )}
+                        />
+
+                        <Controller
+                            name="autorizador"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <InputText
+                                        id={field.name}
+                                        value={field.value}
+                                        className={classNames({ 'p-invalid': fieldState.error })}
+                                        onChange={(e) => field.onChange(e.target.value)}
+                                        maxLength={40}
+                                        autoFocus
+                                        placeholder='Autorizador'
+                                    />
+                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+
+                                </>
+                            )}
+                        />
+
+                        <Controller
+                            name="situacao"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <Dropdown
+                                        id={field.name}
+                                        value={field.value}
+                                        optionLabel="nome"
+                                        optionValue="id"
+                                        options={idNomeSituacao}
+                                        focusInputRef={field.ref}
+                                        onChange={(e) => field.onChange(e.value)}
+                                        className={classNames({ 'p-invalid': fieldState.error })}
+                                    />
+                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                </>
+                            )}
+                        />
+
+                        <Button type='submit' label="Filtrar" icon="pi pi-filter" />
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div className="mt-2">
+
+                <div className="md:hidden">
+                    <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
+                        <Column field="id" header="ID" sortable></Column>
+                        <Column field="empresa_nome" header="Empresa" sortable></Column>
+                        <Column field="solicitante_nome" header="Solicitante" sortable></Column>
+                        <Column field="autorizador_nome" header="Autorizador" sortable></Column>
+                        <Column body={formataSituacao} header="Situação" sortable></Column>
+                        <Column body={botoesDataTable} exportable={false}></Column>
+                    </DataTable>
+                </div>
+
+                <div className="hidden md:block" >
+                    <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
+                        <Column field="id" header="ID" sortable></Column>
+                        <Column field="empresa_nome" header="Empresa" sortable></Column>
+                        <Column field="solicitante_nome" header="Solicitante" sortable></Column>
+                        <Column body={formataDataHoraPrevistaSaida} header="Data/Hora Prevista Saída" sortable></Column>
+                        <Column field="veiculo_nome" header="Veículo" sortable></Column>
+                        <Column field="autorizador_nome" header="Autorizador" sortable></Column>
+                        <Column body={formataSituacao} header="Situação" sortable></Column>
+                        <Column body={botoesDataTable} exportable={false} className='flex flex-row gap-2'></Column>
+                    </DataTable>
+                </div>
+
+                <div className="flex justify-center mt-2 gap-2">
+                    <Paginator first={pagina} rows={linhasPorPagina} totalRecords={totalRegistros} rowsPerPageOptions={[10, 20, 30]} onPageChange={onPageChange} />
+                </div>
+
+                <div className="flex justify-center mt-2 gap-2">
+
+                    <Link href="/admin/veiculos/gerencia_saidas_retornos/0">
+                        <Button label="Incluir" icon="pi pi-plus" />
+                    </Link>
+
+                    <Link href="/admin">
+                        <Button label="Início" icon="pi pi-home" />
+                    </Link>
+
+                </div>
+
+            </div>
+
+            {
+                isLoading && <Loading />
+            }
+
+        </div>
+
+    )
+}

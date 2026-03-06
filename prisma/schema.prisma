@@ -1,0 +1,392 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Sistema
+
+model TsiCidade {
+  id          Int    @id
+  nome        String
+  estadoId    Int    @map("estado_id")
+  estadoNome  String @map("estado_nome")
+  estadoSigla String @map("estado_sigla")
+
+  tsiClienteSistema TsiClienteSistema[]
+  tbaEmpresa        TbaEmpresa[]
+  tveSaidaRetornos  TveSaidaRetorno[]
+
+  @@map("tsi_cidades")
+}
+
+model TsiClienteSistema {
+  id                      Int      @id @default(autoincrement())
+  razaoSocial             String   @map("razao_social")
+  nomeFantasia            String   @map("nome_fantasia")
+  inscricaoEstadual       String?  @map("inscricao_estadual")
+  cnpj                    String   @unique
+  cep                     String?
+  endereco                String?
+  numero                  String?
+  complemento             String?
+  bairro                  String?
+  cidadeId                Int      @map("cidade_id")
+  telefone                String?
+  email                   String?
+  site                    String?
+  valorMensal             Decimal  @map("valor_mensal") @db.Decimal(10, 2)
+  dataPrimeiraMensalidade DateTime @map("data_primeira_mensalidade") @db.Date
+  diaCobranca             Int      @map("dia_cobranca")
+  dataFimLicenca          DateTime @map("data_fim_licenca") @db.Date
+  dataCadastro            DateTime @map("data_cadastro") @db.Date
+  status                  String
+  usuarioSistemaId        Int      @map("usuario_sistema_id")
+  usuarioSistemaNome      String   @map("usuario_sistema_nome")
+  dataHora                DateTime @map("data_hora")
+
+  tsiCidade TsiCidade @relation(fields: [cidadeId], references: [id])
+
+  tbaPerfilUsuarioSistema        TbaPerfilUsuarioSistema[]
+  tbaUsuarioSistema              TbaUsuarioSistema[]
+  tpeMarca                       TveMarca[]
+  tbaEmpresa                     TbaEmpresa[]
+  tveModelo                      TveModelo[]
+  tveVeiculo                     TveVeiculo[]
+  tveManutencao                  TveManutencao[]
+  tbaDireitoPerfilUsuarioSistema TbaDireitoPerfilUsuarioSistema[]
+  tveSaidaRetornos               TveSaidaRetorno[]
+  tbaSetors                      TbaSetor[]
+  tccConsultaClientes            TccConsultaCliente[]
+
+  @@map("tsi_clientes_sistema")
+}
+
+model TsiModulo {
+  id                 Int      @id @default(autoincrement())
+  nome               String
+  realizaVendas      String   @map("realiza_vendas")
+  temAtendentes      String   @map("tem_atendente")
+  status             String
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiOpcao                        TsiOpcao[]
+  tbaDireitoPerfilUsuarioSistemas TbaDireitoPerfilUsuarioSistema[]
+
+  @@map("tsi_modulos")
+}
+
+model TsiOpcao {
+  id       Int    @id @default(autoincrement())
+  moduloId Int    @map("modulo_id")
+  nome     String
+  recurso  String
+  tipo     Int    @db.SmallInt
+  status   String
+
+  tsiModulo                       TsiModulo                        @relation(fields: [moduloId], references: [id])
+  tbaDireitoPerfilUsuarioSistemas TbaDireitoPerfilUsuarioSistema[]
+
+  @@unique([recurso])
+  @@map("tsi_opcoes")
+}
+
+// Básico
+
+model TbaPerfilUsuarioSistema {
+  id                 Int      @id @default(autoincrement())
+  clienteSistemaId   Int      @map("cliente_sistema_id")
+  nome               String
+  status             String
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiClienteSistema TsiClienteSistema @relation(fields: [clienteSistemaId], references: [id])
+
+  tbaUsuarioSistema              TbaUsuarioSistema[]
+  tbaDireitoPerfilUsuarioSistema TbaDireitoPerfilUsuarioSistema[]
+
+  @@map("tba_perfis_usuarios_sistema")
+}
+
+model TbaDireitoPerfilUsuarioSistema {
+  id                     Int @id @default(autoincrement())
+  clienteSistemaId       Int @map("cliente_sistema_id")
+  perfilUsuarioSistemaId Int @map("perfil_usuario_sistema_id")
+  moduloId               Int @map("modulo_id")
+  opcaoId                Int @map("opcao_id")
+  direito                Int @db.SmallInt
+
+  tsiClienteSistema       TsiClienteSistema       @relation(fields: [clienteSistemaId], references: [id])
+  tbaPerfilUsuarioSistema TbaPerfilUsuarioSistema @relation(fields: [perfilUsuarioSistemaId], references: [id])
+  tsiModulo               TsiModulo               @relation(fields: [moduloId], references: [id])
+  tsiOpcao                TsiOpcao                @relation(fields: [opcaoId], references: [id])
+
+  @@unique([perfilUsuarioSistemaId, moduloId, opcaoId])
+  @@map("tba_direitos_perfis_usuarios_sistema")
+}
+
+model TbaUsuarioSistema {
+  id                     Int     @id @default(autoincrement())
+  clienteSistemaId       Int     @map("cliente_sistema_id")
+  nome                   String
+  cpf                    String
+  email                  String?
+  usuario                String?
+  senha                  String?
+  perfilUsuarioSistemaId Int?    @map("perfil_usuario_sistema_id")
+  administradorSistema   String  @map("administrador_sistema")
+  empresaId              Int     @map("empresa_id")
+  setorId                Int     @map("setor_id")
+
+  saidasRetornosVeiculosAutorizador String @default("N") @map("saidas_retornos_veiculos_autorizador")
+  saidasRetornosVeiculosPorteiro    String @default("N") @map("saidas_retornos_veiculos_porteiro")
+
+  status               String
+  dataHoraCadastro     DateTime  @map("data_hora_cadastro")
+  dataHoraUltimoAcesso DateTime? @map("data_hora_ultimo_acesso")
+  usuarioSistemaId     Int       @map("usuario_sistema_id")
+  usuarioSistemaNome   String    @map("usuario_sistema_nome")
+  dataHora             DateTime  @map("data_hora")
+
+  tsiClienteSistema       TsiClienteSistema        @relation(fields: [clienteSistemaId], references: [id])
+  tbaPerfilUsuarioSistema TbaPerfilUsuarioSistema? @relation(fields: [perfilUsuarioSistemaId], references: [id])
+
+  tbaEmpresa TbaEmpresa? @relation(fields: [empresaId], references: [id])
+  tbaSetor   TbaSetor?   @relation(fields: [setorId], references: [id])
+
+  tbaUsuarioSistemaSolicitante     TveSaidaRetorno[] @relation("tbaUsuarioSistemaSolicitante")
+  tbaUsuarioSistemaAutorizador     TveSaidaRetorno[] @relation("tbaUsuarioSistemaAutorizador")
+  tbaUsuarioSistemaPorteiroSaida   TveSaidaRetorno[] @relation("tbaUsuarioSistemaPorteiroSaida")
+  tbaUsuarioSistemaPorteiroRetorno TveSaidaRetorno[] @relation("tbaUsuarioSistemaPorteiroRetorno")
+
+  @@map("tba_usuarios_sistema")
+}
+
+model TbaEmpresa {
+  id                 Int      @id @default(autoincrement())
+  clienteSistemaId   Int      @map("cliente_sistema_id")
+  razaoSocial        String   @map("razao_social")
+  nomeFantasia       String   @map("nome_fantasia")
+  inscricaoEstadual  String?  @map("inscricao_estadual")
+  cnpj               String
+  cep                String?
+  endereco           String?
+  numero             String?
+  complemento        String?
+  bairro             String?
+  cidadeId           Int      @map("cidade_id")
+  telefone           String?
+  email              String?
+  site               String?
+  dataCadastro       DateTime @map("data_cadastro") @db.Date
+  status             String
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiClienteSistema TsiClienteSistema @relation(fields: [clienteSistemaId], references: [id])
+  tsiCidade         TsiCidade         @relation(fields: [cidadeId], references: [id])
+
+  tveVeiculo         TveVeiculo[]
+  tveSaidaRetornos   TveSaidaRetorno[]
+  tbaSetor           TbaSetor[]
+  tbaUsuarioSistemas TbaUsuarioSistema[]
+
+  @@map("tba_empresas")
+}
+
+model TbaSetor {
+  id               Int @id @default(autoincrement())
+  clienteSistemaId Int @map("cliente_sistema_id")
+
+  empresaId Int    @map("empresa_id")
+  nome      String
+
+  status             String
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiClienteSistema  TsiClienteSistema   @relation(fields: [clienteSistemaId], references: [id])
+  tbaEmpresa         TbaEmpresa          @relation(fields: [empresaId], references: [id])
+  tbaUsuarioSistemas TbaUsuarioSistema[]
+
+  @@map("tba_setores")
+}
+
+// Veículos
+
+model TveMarca {
+  id               Int @id @default(autoincrement())
+  clienteSistemaId Int @map("cliente_sistema_id")
+
+  nome String
+
+  status             String
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiClienteSistema TsiClienteSistema @relation(fields: [clienteSistemaId], references: [id])
+  tveModelo         TveModelo[]
+  TveVeiculo        TveVeiculo[]
+
+  @@map("tve_marcas")
+}
+
+model TveModelo {
+  id               Int @id @default(autoincrement())
+  clienteSistemaId Int @map("cliente_sistema_id")
+
+  marcaId Int    @map("marca_id")
+  nome    String
+
+  status String
+
+  tsiClienteSistema TsiClienteSistema @relation(fields: [clienteSistemaId], references: [id])
+  tveMarca          TveMarca          @relation(fields: [marcaId], references: [id])
+
+  tveVeiculo TveVeiculo[]
+
+  @@map("tve_modelos")
+}
+
+model TveVeiculo {
+  id               Int @id @default(autoincrement())
+  clienteSistemaId Int @map("cliente_sistema_id")
+
+  empresaId                           Int      @map("empresa_id")
+  marcaId                             Int      @map("marca_id")
+  modeloId                            Int      @map("modelo_id")
+  placa                               String
+  anoFabricacao                       Int      @map("ano_fabricacao") @db.SmallInt
+  kmAtual                             Int      @map("km_atual")
+  kmRecorrenciaManutencaoPreventiva   Int      @map("km_recorrencia_manutencao_preventiva")
+  kmProximaManutencaoPreventiva       Int      @map("km_proxima_manutencao_preventiva")
+  diasRecorrenciaManutencaoPreventiva Int      @map("dia_recorrencia_manutencao_preventiva") @db.SmallInt
+  dataProximaManutencaoPreventiva     DateTime @map("data_proxima_manutencao_preventiva") @db.Date
+  situacaoManutencao                  Int      @map("situacao_manutencao") @db.SmallInt
+  disponivel                          String
+
+  status             String
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiClienteSitema TsiClienteSistema @relation(fields: [clienteSistemaId], references: [id])
+  tbaEmpresa       TbaEmpresa        @relation(fields: [empresaId], references: [id])
+  tveMarca         TveMarca          @relation(fields: [marcaId], references: [id])
+  tveModelo        TveModelo         @relation(fields: [modeloId], references: [id])
+
+  tveManutencao    TveManutencao[]
+  tveSaidaRetornos TveSaidaRetorno[]
+
+  @@map("tve_veiculos")
+}
+
+model TveManutencao {
+  id               Int @id @default(autoincrement())
+  clienteSistemaId Int @map("cliente_sistema_id")
+
+  veiculoId  Int       @map("veiculo_id")
+  dataInicio DateTime  @map("data_inicio") @db.Date
+  dataFim    DateTime? @map("data_fim") @db.Date
+  tipo       Int       @db.SmallInt
+  km         Int?
+  memorando  String?   @db.Text
+  situacao   Int       @db.SmallInt
+
+  status             String
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiClienteSitema TsiClienteSistema @relation(fields: [clienteSistemaId], references: [id])
+  tveVeiculo       TveVeiculo        @relation(fields: [veiculoId], references: [id])
+
+  @@map("tve_manutencoes")
+}
+
+model TveSaidaRetorno {
+  id               Int @id @default(autoincrement())
+  clienteSistemaId Int @map("cliente_sistema_id")
+
+  empresaId               Int      @map("empresa_id")
+  solicitanteId           Int      @map("solicitante_id")
+  dataHoraSolicitacao     DateTime @map("data_hora_solicitacao")
+  veiculoId               Int      @map("veiculo_id")
+  dataHoraPrevistaSaida   DateTime @map("data_hora_prevista_saida")
+  destinoId               Int      @map("destino_id")
+  motivoSaida             String   @map("motivo_saida") @db.Text
+  ordemServico            String?  @map("ordem_servico")
+  dataHoraPrevistaRetorno DateTime @map("data_hora_prevista_retorno")
+  autorizadorId           Int      @map("autorizador_id")
+
+  autorizado             String?   @map("autorizado")
+  dataHoraAutorizacao    DateTime? @map("data_hora_autorizacao")
+  observacoesAutorizacao String?   @map("observacoes_autorizacao") @db.Text
+
+  porteiroSaidaId  Int?      @map("porteiro_saida_id")
+  dataHoraSaida    DateTime? @map("data_hora_saida")
+  kmSaida          Int?      @map("km_saida")
+  observacoesSaida String?   @map("observacoes_saida") @db.Text
+
+  porteiroRetornoId  Int?      @map("porteiro_retorno_id")
+  dataHoraRetorno    DateTime? @map("data_hora_retorno")
+  kmRetorno          Int?      @map("km_retorno")
+  observacoesRetorno String?   @map("observacoes_retorno") @db.Text
+
+  situacao Int @db.SmallInt
+
+  status             String
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiClienteSitema TsiClienteSistema @relation(fields: [clienteSistemaId], references: [id])
+  tbaEmpresa       TbaEmpresa        @relation(fields: [empresaId], references: [id])
+  tveVeiculo       TveVeiculo        @relation(fields: [veiculoId], references: [id])
+  tsiDestino       TsiCidade         @relation(fields: [destinoId], references: [id])
+
+  tbaUsuarioSistemaSolicitante     TbaUsuarioSistema? @relation("tbaUsuarioSistemaSolicitante", fields: [solicitanteId], references: [id])
+  tbaUsuarioSistemaAutorizador     TbaUsuarioSistema? @relation("tbaUsuarioSistemaAutorizador", fields: [autorizadorId], references: [id])
+  tbaUsuarioSistemaPorteiroSaida   TbaUsuarioSistema? @relation("tbaUsuarioSistemaPorteiroSaida", fields: [porteiroSaidaId], references: [id])
+  tbaUsuarioSistemaPorteiroRetorno TbaUsuarioSistema? @relation("tbaUsuarioSistemaPorteiroRetorno", fields: [porteiroRetornoId], references: [id])
+
+  @@map("tve_saidas_retornos")
+}
+
+// Consulta de Clientes
+model TccConsultaCliente {
+  id               Int @id @default(autoincrement())
+  clienteSistemaId Int @map("cliente_sistema_id")
+
+  idConsulta        Int      @map("id_consulta")
+  dataHoraConsulta  DateTime @map("data_hora_consulta")
+  cpfCnpj           String   @map("cpf_cnpj")
+  nomeRazaoSocial   String   @map("nome_razao_social")
+  constaOcorrencias Boolean  @map("consta_ocorrencias")
+  resultadoConsulta String   @map("resultado_consulta") @db.Text
+
+  usuarioSistemaId   Int      @map("usuario_sistema_id")
+  usuarioSistemaNome String   @map("usuario_sistema_nome")
+  dataHora           DateTime @map("data_hora")
+
+  tsiClienteSitema TsiClienteSistema @relation(fields: [clienteSistemaId], references: [id])
+
+  @@map("tcc_consulta_clientes")
+}
