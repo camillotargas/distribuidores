@@ -4,9 +4,10 @@ import "./globals.css"
 
 import { PrimeReactProvider } from 'primereact/api'
 
-import "primereact/resources/themes/lara-light-cyan/theme.css"
-// import '@/theme/mytheme/theme.scss'
+import "primereact/resources/themes/lara-light-blue/theme.css"// import '@/theme/mytheme/theme.scss'
+
 import 'primeicons/primeicons.css'
+import { Suspense } from "react"
 
 const geistSans = localFont({
   src: "./../fonts/GeistVF.woff",
@@ -47,9 +48,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <PrimeReactProvider>
-          {children}
-        </PrimeReactProvider>
+        <Suspense>
+
+          <PrimeReactProvider>
+            {children}
+          </PrimeReactProvider>
+
+        </Suspense>
 
       </body>
     </html>

@@ -248,12 +248,14 @@ export async function getCrednetPP(pCpfCnpj: string) {
         lParametros.Cabecalho.CnpjOuCpf = lCpfCnpj
         lParametros.Cabecalho.NumeroDocumento = pCpfCnpj
 
-        console.log('lParametros: ', lParametros)
-
+        // console.log('lParametros: ', lParametros)
         // Homologacao
         // const urlQuery = baseUrl + '/api/homologacao/CrednetPP'
         // Producao
-        const urlQuery = baseUrl + '/api/CrednetPP'
+        // const urlQuery = baseUrl + '/api/CrednetPP'
+
+        // O Path completo vem da baseUrl
+        const urlQuery = baseUrl || ''
 
         const res = await fetch(urlQuery, {
             method: 'POST',

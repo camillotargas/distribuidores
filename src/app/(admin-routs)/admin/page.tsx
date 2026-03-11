@@ -1,12 +1,25 @@
-// 'use client'
+'use client'
 
 import { getClaims } from '@/actions/sistema/acesso_sistema'
-import uData from '@/utils/uData'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
-export default async function Page() {
+export default function Page() {
 
-    const lClaims = await getClaims()
+    const [usuarioSistemaNome, setUsuarioSistemaNome] = useState('')
+    const [dataHoraUltimoAcesso, setDataHoraUltimoAcesso] = useState('')
+    const [url, setUrl] = useState('')
+
+    useEffect(() => {
+
+        async function naCargaDados() {
+            const lClaims = await getClaims()
+            setUsuarioSistemaNome(lClaims.usuarioSistemaNome)
+            setDataHoraUltimoAcesso(lClaims.dataHoraUltimoAcesso)
+            // setUrl(process.env.DATABASE_URL)
+        }
+        naCargaDados()
+
+    }, [])
 
     return (
 
@@ -15,18 +28,22 @@ export default async function Page() {
             <div className="bg-surface-0 dark:bg-surface-950 px-6 py-20 md:px-12 lg:px-20">
                 <div className="text-surface-700 dark:text-surface-100 text-center flex flex-col items-center gap-3">
                     <i className="pi pi-user" style={{ fontSize: '3rem' }}></i>
-                    <div className="text-surface-900 dark:text-surface-0 font-bold text-2xl leading-tight">Olá {lClaims.usuarioSistemaNome}.</div>
+                    <div className="text-surface-900 dark:text-surface-0 font-bold text-2xl leading-tight">Olá {usuarioSistemaNome}.</div>
 
-                    {lClaims.dataHoraUltimoAcesso == '' ?
+                    {dataHoraUltimoAcesso == '' ?
                         <>
                             <div className="text-surface-700 dark:text-surface-100 text-xl leading-normal">Seja bem vindo, este é seu primeiro acesso. </div>
                         </>
                         :
                         <>
-                            <div className="text-surface-700 dark:text-surface-100 text-xl leading-normal">Seja bem vindo, seu ultimo acesso foi em: {lClaims.dataHoraUltimoAcesso}. </div>
+                            <div className="text-surface-700 dark:text-surface-100 text-xl leading-normal">Seja bem vindo, seu ultimo acesso foi em: {dataHoraUltimoAcesso}. </div>
                             <div className="text-surface-700 dark:text-surface-100 text-l leading">Caso não foi você, comunique imediatamente o administrador do sistema.</div>
                         </>
                     }
+
+                    {/* {
+                        process.env.NODE_ENV == 'development' && <p className='flex justify-center mt-10 text-red-600 text-2xl'>{}</p>
+                    } */}
 
                 </div>
             </div>
