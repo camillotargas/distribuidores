@@ -110,6 +110,7 @@ export async function getById(pId: number, pOffSet: number) {
                 nomeRazaoSocial: '',
                 constaOcorrencias: null,
                 resultadoConsulta: '',
+                score: null,
 
                 usuarioSistemaId: parseInt(lClaims.usuarioSistemaId),
                 usuarioSistemaNome: lClaims.usuarioSistemaNome,
@@ -132,6 +133,7 @@ export async function getById(pId: number, pOffSet: number) {
                 }
             })
 
+            console.log('pOffSet: ', pOffSet)
             resposta!.dataHora = uData.dbParaFeNn(resposta!.dataHora, pOffSet)
 
         }
@@ -239,9 +241,11 @@ export async function getCrednetPP(pCpfCnpj: string) {
             "CrednetPP": {
                 "AnotacoesCompletas": true,
                 "SerasaScorePF": true,
-                "RendaProPF": true,
+                // "RendaProPF": true,
                 "SerasaScorePJ": true,
-                "FaturamentoPresumidoPJ_PP": true
+                // "FaturamentoPresumidoPJ_PP": true,
+                "HistoricoPagamentoFinanceiroBasico": true,
+                "ResumoPositivoComercial": true
             }
         }
 
@@ -269,6 +273,8 @@ export async function getCrednetPP(pCpfCnpj: string) {
         })
 
         const dados = await res.json()
+
+        console.log('Dados getCrednetPP: ', dados)
 
         return {
             dados: dados ?? {},

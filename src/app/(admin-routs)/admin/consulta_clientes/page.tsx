@@ -27,9 +27,6 @@ import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator'
 import { InputText } from 'primereact/inputtext'
 import { Tag } from 'primereact/tag'
 import { Divider } from 'primereact/divider'
-import { comboBoxType } from '@/types/sistema/combobox'
-import { Dropdown } from 'primereact/dropdown'
-import { getComboBox as empresasGetComboBox } from '@/actions/basico/empresas'
 
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
@@ -68,7 +65,7 @@ export default function Grid() {
     const formataConstaOcorrencia = (dados: consultaClientesType) => {
         return (
             <>
-                <Tag value={dados.constaOcorrencias == true ? 'Sim' : 'Não'} severity={dados.constaOcorrencias == true ? 'danger' : 'success'}></Tag>
+                <Tag value={dados.constaOcorrencias == true ? 'Sim' : 'Não'} severity={dados.constaOcorrencias == true ? 'danger' : 'success'} icon={dados.constaOcorrencias == true ? 'pi pi-times' : 'pi pi-check'} ></Tag>
             </>
         )
     }
@@ -148,8 +145,11 @@ export default function Grid() {
         let texto = ''
         texto = texto + 'ID da Consulta: ' + pDados.ProtocoloB49C.IdConsulta
         texto = texto + '\n'
-        texto = texto + 'Data Hora Consulta: ' + uData.formataDataHora(pDados.ProtocoloB49C.DataHoraConsulta)
+
+        let lDataHoraConsulta = uData.feParaDbNn(pDados.ProtocoloB49C.DataHoraConsulta, offSet)
+        texto = texto + 'Data Hora Consulta: ' + uData.formataDataHora(lDataHoraConsulta)
         texto = texto + '\n'
+
         texto = texto + 'Consta Ocorrência: ' + (pDados.ProtocoloB49C.IsConstaOcorrencia ? 'Sim' : 'Não')
         texto = texto + '\n'
         texto = texto + 'Protesto Estadual: ' + (pDados.ProtocoloB49C.IsProtestoEstadual ? 'Sim' : 'Não')
@@ -210,8 +210,12 @@ export default function Grid() {
                 texto = texto + '\n'
                 texto = texto + 'Tipo de Moeda: ' + item.TipoMoeda
                 texto = texto + '\n'
-                texto = texto + 'Valor: ' + uNumero.formataNumero(item.Valor.toFixed(2), 2, false)
+
+                let lValor = 0
+                lValor = Number(item.Valor) / 100
+                texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
+
                 texto = texto + 'Oringem: ' + item.Origem
                 texto = texto + '\n'
                 texto = texto + '----------------------------------------'
@@ -232,8 +236,12 @@ export default function Grid() {
                 texto = texto + '\n'
                 texto = texto + 'Tipo de Moeda: ' + item.TipoMoeda
                 texto = texto + '\n'
-                texto = texto + 'Valor: ' + uNumero.formataNumero(item.Valor.toFixed(2), 2, false)
+
+                let lValor = 0
+                lValor = Number(item.Valor) / 100
+                texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
+
                 texto = texto + 'Oringem: ' + item.Origem
                 texto = texto + '\n'
                 texto = texto + '----------------------------------------'
@@ -254,7 +262,10 @@ export default function Grid() {
             texto = texto + '\n'
             texto = texto + 'Moeda: ' + pDados.ProtocoloB49C.N250_90_OUT.Moeda
             texto = texto + '\n'
-            texto = texto + 'Valor Total: ' + uNumero.formataNumero(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal.toFixed(2), 2, false)
+
+            let lValor = 0
+            lValor = Number(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal) / 100
+            texto = texto + 'Valor Total: ' + uNumero.formataNumero(lValor, 2, false)
             texto = texto + '\n'
         }
 
@@ -262,9 +273,10 @@ export default function Grid() {
         texto = texto + '<<<<<<<<<< Análise de Crédito >>>>>>>>>>'
         texto = texto + '\n'
         if (pDados.ProtocoloB49C.N500_00_OUT !== null) {
-            texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.N500_00_OUT
-            texto = texto + '\n'
-
+            if (pDados.ProtocoloB49C.N500_00_OUT.Pontuacao) {
+                texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.N500_00_OUT.Pontuacao || '0'
+                texto = texto + '\n'
+            }
         }
 
         return texto
@@ -296,7 +308,9 @@ export default function Grid() {
                 messages.current?.clear()
             }
 
-            // Pega registro no
+            console.log('respostaConsulta.dados: ', respostaConsulta.dados)
+
+            // Pega registro novo
             setIsLoading(true)
             const respostaGetById = await getById(0, offSet)
             setIsLoading(false)
@@ -315,10 +329,21 @@ export default function Grid() {
             // Atribui dados da consulta ao Serasa
             lNovaConsulta.cpfCnpj = getValues('cpfCnpj')
             lNovaConsulta.idConsulta = respostaConsulta.dados.ProtocoloB49C.IdConsulta
-            lNovaConsulta.dataHoraConsulta = uData.novaDataHora(respostaConsulta.dados.ProtocoloB49C.DataHoraConsulta)
+            lNovaConsulta.dataHoraConsulta = uData.feParaDbNn(uData.novaDataHora(respostaConsulta.dados.ProtocoloB49C.DataHoraConsulta), offSet)
             lNovaConsulta.nomeRazaoSocial = respostaConsulta.dados.ProtocoloB49C.N200_00_OUT.NomePessoa
             lNovaConsulta.constaOcorrencias = respostaConsulta.dados.ProtocoloB49C.IsConstaOcorrencia
             lNovaConsulta.resultadoConsulta = geraTextoResultadoConsulta(respostaConsulta.dados)
+            // lNovaConsulta.score = 0
+
+            if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT !== null) {
+                if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT.Pontuacao) {
+                    lNovaConsulta.score = Number(respostaConsulta.dados.ProtocoloB49C.N500_00_OUT.Pontuacao)
+                } else {
+                    lNovaConsulta.score = 0
+                }
+            } else {
+                lNovaConsulta.score = 0
+            }
 
             // Inclui o resultado da consulta no DB
             setIsLoading(true)

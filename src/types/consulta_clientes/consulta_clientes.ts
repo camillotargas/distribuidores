@@ -11,6 +11,7 @@ export const consultaClientesSchema = z.object({
     nomeRazaoSocial: z.string().trim().min(1, { message: "Campo Obrigatório" }),
     constaOcorrencias: z.boolean({ required_error: "Campo Obrigatório", invalid_type_error: "Campo Obrigatório" }),
     resultadoConsulta: z.string().trim().min(1, { message: "Campo Obrigatório" }),
+    score: z.number({ required_error: "Campo Obrigatório", invalid_type_error: "Campo Obrigatório" }),
 
     usuarioSistemaId: z.number({ required_error: "Campo Obrigatório", invalid_type_error: "Campo Obrigatório" }),
     usuarioSistemaNome: z.string().trim().min(1, { message: "Campo Obrigatório" }),

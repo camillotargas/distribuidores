@@ -25,6 +25,7 @@ import { Divider } from 'primereact/divider'
 
 import { logicoNomeType } from '@/types/sistema/logicoNome'
 import { InputTextarea } from 'primereact/inputtextarea'
+import { Message } from 'primereact/message'
 
 export default function Formulario() {
 
@@ -62,6 +63,22 @@ export default function Formulario() {
 
     function imprimir() {
         alert('imprimir')
+    }
+
+    function mensagemConstaOcorrencias(pConstaOcorrencia: boolean) {
+        if (pConstaOcorrencia) {
+            return (
+                <>
+                    <Message severity="error" text="Consta Ocorrência" />
+                </>
+            )
+        } else {
+            return (
+                <>
+                    <Message severity="success" text="Não Consta Ocorrência" />
+                </>
+            )
+        }
     }
 
     const logicoNomeConstaOcorrencia: logicoNomeType[] = [
@@ -202,7 +219,7 @@ export default function Formulario() {
                         />
                     </div>
 
-                    <div className="flex flex-col">
+                    {/* <div className="flex flex-col">
                         <Controller
                             name="constaOcorrencias"
                             control={control}
@@ -218,6 +235,29 @@ export default function Formulario() {
                                         focusInputRef={field.ref}
                                         onChange={(e) => field.onChange(e.value)}
                                         className={classNames({ 'p-invalid': fieldState.error })}
+                                        disabled
+                                    />
+                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                </>
+                            )}
+                        />
+                    </div> */}
+
+                    <div className="flex flex-col">
+                        <Controller
+                            name="score"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <label htmlFor={field.name}>Score</label>
+                                    <InputNumber
+                                        id={field.name}
+                                        inputRef={field.ref}
+                                        value={field.value}
+                                        onBlur={field.onBlur}
+                                        onValueChange={(e) => field.onChange(e)}
+                                        useGrouping={false}
+                                        inputClassName={classNames({ 'p-invalid': fieldState.error })}
                                         disabled
                                     />
                                     {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
@@ -269,6 +309,10 @@ export default function Formulario() {
                         />
                     </div>
 
+                </div>
+
+                <div className="flex flex-col mt-3">
+                    {mensagemConstaOcorrencias(dados.constaOcorrencias)}
                 </div>
 
                 <div className="flex flex-col mt-3">
