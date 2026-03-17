@@ -329,10 +329,15 @@ export default function Grid() {
             // Atribui dados da consulta ao Serasa
             lNovaConsulta.cpfCnpj = getValues('cpfCnpj')
             lNovaConsulta.idConsulta = respostaConsulta.dados.ProtocoloB49C.IdConsulta
-            lNovaConsulta.dataHoraConsulta = uData.feParaDbNn(uData.novaDataHora(respostaConsulta.dados.ProtocoloB49C.DataHoraConsulta), offSet)
+
+            // lNovaConsulta.dataHoraConsulta = uData.novaDataHora(respostaConsulta.dados.ProtocoloB49C.DataHoraConsulta)
+            lNovaConsulta.dataHoraConsulta = uData.feParaDbNn(respostaConsulta.dados.ProtocoloB49C.DataHoraConsulta, offSet)
+            // lNovaConsulta.dataHoraConsulta = uData.dbParaFeNn(respostaConsulta.dados.ProtocoloB49C.DataHoraConsulta, offSet)
+
             lNovaConsulta.nomeRazaoSocial = respostaConsulta.dados.ProtocoloB49C.N200_00_OUT.NomePessoa
             lNovaConsulta.constaOcorrencias = respostaConsulta.dados.ProtocoloB49C.IsConstaOcorrencia
             lNovaConsulta.resultadoConsulta = geraTextoResultadoConsulta(respostaConsulta.dados)
+            lNovaConsulta.resultadoCompletoConsulta = JSON.stringify(respostaConsulta.dados)
             // lNovaConsulta.score = 0
 
             if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT !== null) {

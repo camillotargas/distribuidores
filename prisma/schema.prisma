@@ -375,13 +375,14 @@ model TccConsultaCliente {
   id               Int @id @default(autoincrement())
   clienteSistemaId Int @map("cliente_sistema_id")
 
-  idConsulta        Int      @map("id_consulta")
-  dataHoraConsulta  DateTime @map("data_hora_consulta")
-  cpfCnpj           String   @map("cpf_cnpj")
-  nomeRazaoSocial   String   @map("nome_razao_social")
-  constaOcorrencias Boolean  @map("consta_ocorrencias")
-  resultadoConsulta String   @map("resultado_consulta") @db.Text
-  score             Int      @default(0) @db.SmallInt
+  idConsulta                Int      @map("id_consulta")
+  dataHoraConsulta          DateTime @map("data_hora_consulta")
+  cpfCnpj                   String   @map("cpf_cnpj")
+  nomeRazaoSocial           String   @map("nome_razao_social")
+  constaOcorrencias         Boolean  @map("consta_ocorrencias")
+  resultadoConsulta         String   @map("resultado_consulta") @db.Text
+  score                     Int      @default(0) @db.SmallInt
+  resultadoCompletoConsulta String?  @map("resultado_completo_consulta") @db.Text
 
   usuarioSistemaId   Int      @map("usuario_sistema_id")
   usuarioSistemaNome String   @map("usuario_sistema_nome")

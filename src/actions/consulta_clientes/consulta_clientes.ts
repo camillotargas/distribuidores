@@ -111,6 +111,7 @@ export async function getById(pId: number, pOffSet: number) {
                 constaOcorrencias: null,
                 resultadoConsulta: '',
                 score: null,
+                resultadoCompletoConsulta: '',
 
                 usuarioSistemaId: parseInt(lClaims.usuarioSistemaId),
                 usuarioSistemaNome: lClaims.usuarioSistemaNome,
@@ -134,6 +135,7 @@ export async function getById(pId: number, pOffSet: number) {
             })
 
             console.log('pOffSet: ', pOffSet)
+            resposta!.dataHoraConsulta = uData.dbParaFeNn(resposta!.dataHoraConsulta, pOffSet)
             resposta!.dataHora = uData.dbParaFeNn(resposta!.dataHora, pOffSet)
 
         }
