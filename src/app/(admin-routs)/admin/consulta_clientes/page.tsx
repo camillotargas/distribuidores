@@ -34,6 +34,8 @@ import uData from '@/utils/uData'
 import { InputMask } from 'primereact/inputmask'
 import uDados from '@/utils/uDados'
 import uNumero from '@/utils/uNumeros'
+import { ProgressBar } from 'primereact/progressbar'
+import { MeterGroup } from 'primereact/metergroup'
 
 export default function Grid() {
 
@@ -76,6 +78,27 @@ export default function Grid() {
                 {uData.formataDataHora(dados.dataHoraConsulta)}
             </>
         )
+    }
+
+    // const valueTemplate = () => {
+    //     return (
+    //         <React.Fragment>
+    //             {dados.score!} teste
+    //         </React.Fragment>
+    //     )
+    // }
+
+    const formataScore = (dados: any) => {
+
+        // let lPercentual = 0
+        // lPercentual = (dados.score)
+        // console.log('lPercentual: ', lPercentual)
+        // return <ProgressBar value={lPercentual.toFixed(0)} showValue={true} style={{ height: '20px', fontSize: '0.5rem' }}></ProgressBar>
+        // return <ProgressBar value={dados.score / 10} displayValueTemplate={valueTemplate} style={{ height: '20px', fontSize: '0.5rem' }}></ProgressBar>
+        // label: 'Situação Favorável', color: '#34d399', value: dadosRespostasGruposPerguntas.per1
+        const values = [{ label: 'Situação Favorável', color: '#34d399', value: 10 }];
+        return <MeterGroup values={values} />
+
     }
 
     const filtrosSchema = z.object({
@@ -174,30 +197,78 @@ export default function Grid() {
         texto = texto + '\n'
         texto = texto + '<<<<<<<<<< Protestos >>>>>>>>>>'
         texto = texto + '\n'
+
         if (pDados.ProtocoloB49C.N210_99_OUT.Mensagem) {
             texto = texto + pDados.ProtocoloB49C.N210_99_OUT.Mensagem
             texto = texto + '\n'
+        } else {
+            texto = texto + 'NAO CONSTAM OCORRENCIAS N210_99_OUT'
+            texto = texto + '\n'
         }
 
-        texto = texto + '\n'
-        texto = texto + '<<<<<<<<<< Falencia/Recuperação Judicial >>>>>>>>>>'
-        texto = texto + '\n'
-        if (pDados.ProtocoloB49C.N220_00_OUT !== null) {
-            texto = texto + pDados.ProtocoloB49C.N220_00_OUT
+        if (pDados.ProtocoloB49C.TipoDocumento == 'J') {
+
             texto = texto + '\n'
+            texto = texto + '<<<<<<<<<< Falencia/Recuperação Judicial >>>>>>>>>>'
+            texto = texto + '\n'
+
+            if (pDados.ProtocoloB49C.N220_00_OUT !== null) {
+                texto = texto + pDados.ProtocoloB49C.N220_00_OUT
+                texto = texto + '\n'
+            } else {
+                texto = texto + 'NAO CONSTAM OCORRENCIAS N220_00_OUT'
+                texto = texto + '\n'
+            }
+
         }
 
         texto = texto + '\n'
         texto = texto + '<<<<<<<<<< Ações Judiciais >>>>>>>>>>'
         texto = texto + '\n'
+
         if (pDados.ProtocoloB49C.N230_99_OUT.Mensagem) {
             texto = texto + pDados.ProtocoloB49C.N230_99_OUT.Mensagem
+            texto = texto + '\n'
+        } else {
+            texto = texto + 'NAO CONSTAM OCORRENCIAS N230_99_OUT'
             texto = texto + '\n'
         }
 
         texto = texto + '\n'
         texto = texto + '<<<<<<<<<< Pendências Financeiras >>>>>>>>>>'
         texto = texto + '\n'
+
+        if (pDados.ProtocoloB49C.N240_00_OUTs_I) {
+
+            pDados.ProtocoloB49C.N240_00_OUTs_I.map((item: any) => {
+                // console.log('item: ', item)
+                texto = texto + 'Data Ocorrêmcia: ' + uData.formataData(item.DataOcorrencia)
+                texto = texto + '\n'
+                texto = texto + 'Modalidade: ' + item.Modalidade
+                texto = texto + '\n'
+                texto = texto + 'Avalista: ' + (item.Avalista ? 'Sim' : 'Não')
+                texto = texto + '\n'
+                texto = texto + 'Tipo de Moeda: ' + item.TipoMoeda
+                texto = texto + '\n'
+
+                let lValor = 0
+                lValor = Number(item.Valor) / 100
+                texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
+                texto = texto + '\n'
+
+                texto = texto + 'Oringem: ' + item.Origem
+                texto = texto + '\n'
+                texto = texto + '----------------------------------------'
+                texto = texto + '\n'
+            })
+
+        } else {
+
+            texto = texto + 'NAO CONSTAM OCORRENCIAS N240_00_OUTs_I'
+            texto = texto + '\n'
+
+        }
+
         if (pDados.ProtocoloB49C.N240_00_OUTs_V) {
 
             pDados.ProtocoloB49C.N240_00_OUTs_V.map((item: any) => {
@@ -221,6 +292,11 @@ export default function Grid() {
                 texto = texto + '----------------------------------------'
                 texto = texto + '\n'
             })
+
+        } else {
+
+            texto = texto + 'NAO CONSTAM OCORRENCIAS N240_00_OUTs_V'
+            texto = texto + '\n'
 
         }
 
@@ -248,11 +324,17 @@ export default function Grid() {
                 texto = texto + '\n'
             })
 
+        } else {
+
+            texto = texto + 'NAO CONSTAM OCORRENCIAS N240_00_OUTs_5'
+            texto = texto + '\n'
+
         }
 
         texto = texto + '\n'
         texto = texto + '<<<<<<<<<< Cheques sem Fundo >>>>>>>>>>'
         texto = texto + '\n'
+
         if (pDados.ProtocoloB49C.N250_90_OUT) {
             texto = texto + 'Total de Ocorrências: ' + pDados.ProtocoloB49C.N250_90_OUT.TotalOcorrencia
             texto = texto + '\n'
@@ -267,6 +349,12 @@ export default function Grid() {
             lValor = Number(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal) / 100
             texto = texto + 'Valor Total: ' + uNumero.formataNumero(lValor, 2, false)
             texto = texto + '\n'
+
+        } else {
+
+            texto = texto + 'NAO CONSTAM OCORRENCIAS N250_90_OUT'
+            texto = texto + '\n'
+
         }
 
         texto = texto + '\n'
@@ -275,10 +363,20 @@ export default function Grid() {
 
         if (pDados.ProtocoloB49C.TipoDocumento == 'F') {
 
-            if (pDados.ProtocoloB49C.F900_REHM_OUT !== null) {
-                texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.F900_REHM_OUT.Score || '0'
+            // if (pDados.ProtocoloB49C.F900_REHM_OUT !== null) {
+            //     texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.F900_REHM_OUT.Score || '0'
+            //     texto = texto + '\n'
+            //     texto = texto + 'Mensagem: ' + pDados.ProtocoloB49C.F900_REHM_OUT.Mensagem || ''
+            //     texto = texto + '\n'
+            // }
+
+            if (pDados.ProtocoloB49C.N500_00_OUT !== null) {
+                texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.N500_00_OUT.Pontuacao || '0'
                 texto = texto + '\n'
-                texto = texto + 'Mensagem: ' + pDados.ProtocoloB49C.F900_REHM_OUT.Mensagem || ''
+                texto = texto + 'Mensagem: ' + pDados.ProtocoloB49C.N500_00_OUT.msgClasseScoreMensagem || ''
+                texto = texto + '\n'
+            } else {
+                texto = texto + 'NAO CONSTAM OCORRENCIAS N500_00_OUT'
                 texto = texto + '\n'
             }
 
@@ -296,6 +394,9 @@ export default function Grid() {
                 texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.F900_P8JS_OUT[0].ClasseTabelaScoreFATOR || '0'
                 texto = texto + '\n'
                 texto = texto + 'Mensagem: ' + pDados.ProtocoloB49C.F900_P8JS_OUT[0].Mensagem || ''
+                texto = texto + '\n'
+            } else {
+                texto = texto + 'NAO CONSTAM OCORRENCIAS N500_00_OUT'
                 texto = texto + '\n'
             }
 
@@ -376,8 +477,16 @@ export default function Grid() {
 
             if (respostaConsulta.dados.ProtocoloB49C.TipoDocumento == 'F') {
 
-                if (respostaConsulta.dados.ProtocoloB49C.F900_REHM_OUT !== null) {
-                    lNovaConsulta.score = respostaConsulta.dados.ProtocoloB49C.F900_REHM_OUT.Score || '0'
+                // if (respostaConsulta.dados.ProtocoloB49C.F900_REHM_OUT !== null) {
+                //     lNovaConsulta.score = respostaConsulta.dados.ProtocoloB49C.F900_REHM_OUT.Score || '0'
+                // }
+
+                if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT !== null) {
+                    if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT.Pontuacao) {
+                        lNovaConsulta.score = Number(respostaConsulta.dados.ProtocoloB49C.N500_00_OUT.Pontuacao)
+                    } else {
+                        lNovaConsulta.score = 0
+                    }
                 }
 
             } else {
@@ -537,6 +646,7 @@ export default function Grid() {
                         <Column field="cpfCnpj" header="CPF/CNPJ" sortable></Column>
                         <Column field="nomeRazaoSocial" header="Nome/Razão Social" sortable></Column>
                         <Column body={formataConstaOcorrencia} header="Consta Ocorrências" sortable></Column>
+                        {/* <Column body={formataScore} header="Score" sortable></Column> */}
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
                 </div>
@@ -548,6 +658,7 @@ export default function Grid() {
                         <Column field="cpfCnpj" header="CPF/CNPJ" sortable></Column>
                         <Column field="nomeRazaoSocial" header="Nome/Razão Social" sortable></Column>
                         <Column body={formataConstaOcorrencia} header="Consta Ocorrências" sortable bodyClassName="text-center"></Column>
+                        {/* <Column body={formataScore} header="Score" sortable></Column> */}
                         <Column field="usuarioSistemaNome" header="Usuário/Sistema" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
