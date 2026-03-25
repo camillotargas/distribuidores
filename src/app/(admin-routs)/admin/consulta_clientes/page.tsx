@@ -201,7 +201,7 @@ export default function Grid() {
         if (pDados.ProtocoloB49C.N240_00_OUTs_V) {
 
             pDados.ProtocoloB49C.N240_00_OUTs_V.map((item: any) => {
-                console.log('item: ', item)
+                // console.log('item: ', item)
                 texto = texto + 'Data Ocorrêmcia: ' + uData.formataData(item.DataOcorrencia)
                 texto = texto + '\n'
                 texto = texto + 'Modalidade: ' + item.Modalidade
@@ -227,7 +227,7 @@ export default function Grid() {
         if (pDados.ProtocoloB49C.N240_00_OUTs_5) {
 
             pDados.ProtocoloB49C.N240_00_OUTs_5.map((item: any) => {
-                console.log('item: ', item)
+                // console.log('item: ', item)
                 texto = texto + 'Data Ocorrêmcia: ' + uData.formataData(item.DataOcorrencia)
                 texto = texto + '\n'
                 texto = texto + 'Modalidade: ' + item.Modalidade
@@ -272,11 +272,33 @@ export default function Grid() {
         texto = texto + '\n'
         texto = texto + '<<<<<<<<<< Análise de Crédito >>>>>>>>>>'
         texto = texto + '\n'
-        if (pDados.ProtocoloB49C.N500_00_OUT !== null) {
-            if (pDados.ProtocoloB49C.N500_00_OUT.Pontuacao) {
-                texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.N500_00_OUT.Pontuacao || '0'
+
+        if (pDados.ProtocoloB49C.TipoDocumento == 'F') {
+
+            if (pDados.ProtocoloB49C.F900_REHM_OUT !== null) {
+                texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.F900_REHM_OUT.Score || '0'
+                texto = texto + '\n'
+                texto = texto + 'Mensagem: ' + pDados.ProtocoloB49C.F900_REHM_OUT.Mensagem || ''
                 texto = texto + '\n'
             }
+
+        } else {
+
+            // console.log('pDados.ProtocoloB49C.F900_P8JS_OUT: ', pDados.ProtocoloB49C.F900_P8JS_OUT)
+            // console.log('pDados.ProtocoloB49C.F900_P8JS_OUT[0].ClasseTabelaScoreFATOR: ', pDados.ProtocoloB49C.F900_P8JS_OUT[0].ClasseTabelaScoreFATOR)
+
+
+            if (pDados.ProtocoloB49C.F900_P8JS_OUT) {
+
+                // console.log('pDados.ProtocoloB49C.F900_P8JS_OUT[0].ClasseTabelaScoreFATOR: ', pDados.ProtocoloB49C.F900_P8JS_OUT[0].ClasseTabelaScoreFATOR)
+                // console.log('pDados.ProtocoloB49C.F900_P8JS_OUT[0].Mensagem: ', pDados.ProtocoloB49C.F900_P8JS_OUT[0].Mensagem)
+
+                texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.F900_P8JS_OUT[0].ClasseTabelaScoreFATOR || '0'
+                texto = texto + '\n'
+                texto = texto + 'Mensagem: ' + pDados.ProtocoloB49C.F900_P8JS_OUT[0].Mensagem || ''
+                texto = texto + '\n'
+            }
+
         }
 
         return texto
@@ -308,7 +330,7 @@ export default function Grid() {
                 messages.current?.clear()
             }
 
-            console.log('respostaConsulta.dados: ', respostaConsulta.dados)
+            // console.log('respostaConsulta.dados: ', respostaConsulta.dados)
 
             // Pega registro novo
             setIsLoading(true)
@@ -338,16 +360,32 @@ export default function Grid() {
             lNovaConsulta.constaOcorrencias = respostaConsulta.dados.ProtocoloB49C.IsConstaOcorrencia
             lNovaConsulta.resultadoConsulta = geraTextoResultadoConsulta(respostaConsulta.dados)
             lNovaConsulta.resultadoCompletoConsulta = JSON.stringify(respostaConsulta.dados)
-            // lNovaConsulta.score = 0
 
-            if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT !== null) {
-                if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT.Pontuacao) {
-                    lNovaConsulta.score = Number(respostaConsulta.dados.ProtocoloB49C.N500_00_OUT.Pontuacao)
-                } else {
-                    lNovaConsulta.score = 0
+            // lNovaConsulta.score = 0
+            // if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT !== null) {
+            //     if (respostaConsulta.dados.ProtocoloB49C.N500_00_OUT.Pontuacao) {
+            //         lNovaConsulta.score = Number(respostaConsulta.dados.ProtocoloB49C.N500_00_OUT.Pontuacao)
+            //     } else {
+            //         lNovaConsulta.score = 0
+            //     }
+            // } else {
+            //     lNovaConsulta.score = 0
+            // }
+
+            lNovaConsulta.score = 0
+
+            if (respostaConsulta.dados.ProtocoloB49C.TipoDocumento == 'F') {
+
+                if (respostaConsulta.dados.ProtocoloB49C.F900_REHM_OUT !== null) {
+                    lNovaConsulta.score = respostaConsulta.dados.ProtocoloB49C.F900_REHM_OUT.Score || '0'
                 }
+
             } else {
-                lNovaConsulta.score = 0
+
+                if (respostaConsulta.dados.ProtocoloB49C.F900_P8JS_OUT) {
+                    lNovaConsulta.score = respostaConsulta.dados.ProtocoloB49C.F900_P8JS_OUT[0].ClasseTabelaScoreFATOR || 0
+                }
+
             }
 
             // Inclui o resultado da consulta no DB

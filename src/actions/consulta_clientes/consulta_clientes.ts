@@ -134,7 +134,7 @@ export async function getById(pId: number, pOffSet: number) {
                 }
             })
 
-            console.log('pOffSet: ', pOffSet)
+            // console.log('pOffSet: ', pOffSet)
             resposta!.dataHoraConsulta = uData.dbParaFeNn(resposta!.dataHoraConsulta, pOffSet)
             resposta!.dataHora = uData.dbParaFeNn(resposta!.dataHora, pOffSet)
 
@@ -207,6 +207,7 @@ export async function postPut(pDados: consultaClientesType, pOffSet: number) {
         }
 
     } catch (error) {
+        // console.log('postPut: ' + error)
         return {
             id: null,
             erro: 'postPut: ' + error
@@ -224,31 +225,56 @@ export async function getCrednetPP(pCpfCnpj: string) {
         const apiChave = process.env.API_GREGLINE_CHAVE
         const basicaKeyChave = 'BASIC ' + apiKey + ':' + apiChave
 
-        let lCpfCnpj = ""
+        let lCpfCnpj = ''
+        let lParametros = null
         if (pCpfCnpj.length == 11) {
-            lCpfCnpj = "CPF"
-        } else {
-            lCpfCnpj = "CNPJ"
-        }
 
-        let lParametros = {
-            "opcoes": {
-                "formato": "json",
-            },
-            "Cabecalho": {
-                "CpfOuCnpjConsultante": "07301609000140",
-                "CnpjOuCpf": "",
-                "NumeroDocumento": "",
-            },
-            "CrednetPP": {
-                "AnotacoesCompletas": true,
-                "SerasaScorePF": true,
-                // "RendaProPF": true,
-                "SerasaScorePJ": true,
-                // "FaturamentoPresumidoPJ_PP": true,
-                "HistoricoPagamentoFinanceiroBasico": true,
-                "ResumoPositivoComercial": true
+            lCpfCnpj = "CPF"
+
+            lParametros = {
+                "opcoes": {
+                    "formato": "json",
+                },
+                "Cabecalho": {
+                    "CpfOuCnpjConsultante": "07301609000140",
+                    "CnpjOuCpf": "",
+                    "NumeroDocumento": "",
+                },
+                "CrednetPP": {
+                    "AnotacoesCompletas": true,
+                    "SerasaScorePF": true,
+                    // "RendaProPF": true,
+                    // "SerasaScorePJ": true,
+                    // "FaturamentoPresumidoPJ_PP": true,
+                    // "HistoricoPagamentoFinanceiroBasico": true,
+                    // "ResumoPositivoComercial": true
+                }
             }
+
+        } else {
+
+            lCpfCnpj = "CNPJ"
+
+            lParametros = {
+                "opcoes": {
+                    "formato": "json",
+                },
+                "Cabecalho": {
+                    "CpfOuCnpjConsultante": "07301609000140",
+                    "CnpjOuCpf": "",
+                    "NumeroDocumento": "",
+                },
+                "CrednetPP": {
+                    "AnotacoesCompletas": true,
+                    // "SerasaScorePF": true,
+                    // "RendaProPF": true,
+                    "SerasaScorePJ": true,
+                    // "FaturamentoPresumidoPJ_PP": true,
+                    // "HistoricoPagamentoFinanceiroBasico": true,
+                    // "ResumoPositivoComercial": true
+                }
+            }
+
         }
 
         lParametros.Cabecalho.CnpjOuCpf = lCpfCnpj
