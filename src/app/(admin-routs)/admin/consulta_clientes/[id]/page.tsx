@@ -26,6 +26,8 @@ import { Divider } from 'primereact/divider'
 import { logicoNomeType } from '@/types/sistema/logicoNome'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { Message } from 'primereact/message'
+import { getClaims } from '@/actions/sistema/acesso_sistema'
+import { usuariosSistemaType } from '@/types/basico/usuarios_sistema'
 
 export default function Formulario() {
 
@@ -86,6 +88,7 @@ export default function Formulario() {
         { logico: false, nome: 'Não' },
     ]
 
+
     useEffect(() => {
         buscaDados()
     }, [])
@@ -95,7 +98,7 @@ export default function Formulario() {
         <div className="px-10">
 
             <PageTitle texto="Consulta de Clientes" />
-            <PageSubTitle texto="Edição" />
+            {/* <PageSubTitle texto="Detalhamento" /> */}
 
             <Divider />
 
@@ -342,7 +345,7 @@ export default function Formulario() {
 
                 <div className="flex justify-center mt-2 gap-2">
 
-                    <Button label="Gerar PDF" type="button" icon="pi pi-file-pdf" onClick={imprimir} />
+                    {/* <Button label="Gerar PDF" type="button" icon="pi pi-file-pdf" onClick={imprimir} /> */}
                     <Button label="Voltar" type="button" icon="pi pi-arrow-left" onClick={router.back} />
 
                 </div>

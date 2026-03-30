@@ -36,6 +36,8 @@ import uDados from '@/utils/uDados'
 import uNumero from '@/utils/uNumeros'
 import { ProgressBar } from 'primereact/progressbar'
 import { MeterGroup } from 'primereact/metergroup'
+import { acessoModulosOpcoes, getClaims } from '@/actions/sistema/acesso_sistema'
+import { usuariosSistemaType } from '@/types/basico/usuarios_sistema'
 
 export default function Grid() {
 
@@ -55,6 +57,9 @@ export default function Grid() {
 
     const refCpfCnpj = useRef<any>(null)
     const offSet = uData.consultaOffSet()
+
+    // Ajusta Acesso
+    const [hiddenAcessoAdministrativo, setHiddenAcessoAdministrativo] = useState(true)
 
     const botoesDataTable = (dados: consultaClientesType) => {
         return (
@@ -96,8 +101,9 @@ export default function Grid() {
         // return <ProgressBar value={lPercentual.toFixed(0)} showValue={true} style={{ height: '20px', fontSize: '0.5rem' }}></ProgressBar>
         // return <ProgressBar value={dados.score / 10} displayValueTemplate={valueTemplate} style={{ height: '20px', fontSize: '0.5rem' }}></ProgressBar>
         // label: 'Situação Favorável', color: '#34d399', value: dadosRespostasGruposPerguntas.per1
-        const values = [{ label: 'Situação Favorável', color: '#34d399', value: 10 }];
-        return <MeterGroup values={values} />
+        // label: 'Situação Favorável',
+        // const values = [{ color: '#34d399', value: 10 }];
+        // return <MeterGroup values={values} />
 
     }
 
@@ -128,6 +134,8 @@ export default function Grid() {
 
     async function filtra(filtros: filtrosType) {
 
+        setHiddenAcessoAdministrativo(false)
+
         setIsLoading(true)
         const resposta = await getAll(filtros.primeiro, filtros.linhas, filtros.nome, filtros.cpfCnpj, filtros.usuarioSistema)
 
@@ -144,9 +152,7 @@ export default function Grid() {
             setIsLoading(false)
         }
 
-    }
-
-    function teste() {
+        refCpfCnpj.current?.focus()
 
     }
 
@@ -252,12 +258,18 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(item.Valor) / 100
+                // lValor = Number(item.Valor.replaceAll('.', '')) / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
                 texto = texto + 'Oringem: ' + item.Origem
                 texto = texto + '\n'
+
+                if (item.TipoDeAnotacao !== null) {
+                    texto = texto + 'Tipo de Anotação: ' + item.TipoDeAnotacao
+                    texto = texto + '\n'
+                }
+
                 texto = texto + '----------------------------------------'
                 texto = texto + '\n'
             })
@@ -283,12 +295,18 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(item.Valor) / 100
+                // lValor = Number(item.Valor.replaceAll('.', '')) / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
                 texto = texto + 'Oringem: ' + item.Origem
                 texto = texto + '\n'
+
+                if (item.TipoDeAnotacao !== null) {
+                    texto = texto + 'Tipo de Anotação: ' + item.TipoDeAnotacao
+                    texto = texto + '\n'
+                }
+
                 texto = texto + '----------------------------------------'
                 texto = texto + '\n'
             })
@@ -314,12 +332,18 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(item.Valor) / 100
+                // lValor = Number(item.Valor.replaceAll('.', '')) / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
                 texto = texto + 'Oringem: ' + item.Origem
                 texto = texto + '\n'
+
+                if (item.TipoDeAnotacao !== null) {
+                    texto = texto + 'Tipo de Anotação: ' + item.TipoDeAnotacao
+                    texto = texto + '\n'
+                }
+
                 texto = texto + '----------------------------------------'
                 texto = texto + '\n'
             })
@@ -346,7 +370,7 @@ export default function Grid() {
             texto = texto + '\n'
 
             let lValor = 0
-            lValor = Number(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal) / 100
+            // lValor = Number(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal.replaceAll('.', '')) / 100
             texto = texto + 'Valor Total: ' + uNumero.formataNumero(lValor, 2, false)
             texto = texto + '\n'
 
@@ -371,10 +395,12 @@ export default function Grid() {
             // }
 
             if (pDados.ProtocoloB49C.N500_00_OUT !== null) {
+
                 texto = texto + 'Serasa Score: ' + pDados.ProtocoloB49C.N500_00_OUT.Pontuacao || '0'
                 texto = texto + '\n'
-                texto = texto + 'Mensagem: ' + pDados.ProtocoloB49C.N500_00_OUT.msgClasseScoreMensagem || ''
+                texto = texto + 'Mensagem: ' + pDados.ProtocoloB49C.N500_00_OUT.msgClasseScore || ''
                 texto = texto + '\n'
+
             } else {
                 texto = texto + 'NAO CONSTAM OCORRENCIAS N500_00_OUT'
                 texto = texto + '\n'
@@ -539,6 +565,24 @@ export default function Grid() {
         ajustaUrl()
     }
 
+    // Após Carga dos Dados
+    useEffect(() => {
+
+        async function aposCargaDados() {
+
+            setIsLoading(true)
+
+            const lAcesso = await acessoModulosOpcoes('frmConsultaClientes', 2)
+            setHiddenAcessoAdministrativo(!lAcesso)
+
+            setIsLoading(false)
+
+        }
+
+        aposCargaDados()
+
+    }, [dados])
+
     useEffect(() => {
 
         setValue('primeiro', pPrimeiro)
@@ -571,7 +615,7 @@ export default function Grid() {
 
                     <div className='flex flex-row gap-2'>
 
-                        <Controller
+                        {/* <Controller
                             name="cpfCnpj"
                             control={control}
                             render={({ field, fieldState }) => (
@@ -588,6 +632,27 @@ export default function Grid() {
                                     {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
                                 </>
                             )}
+                        /> */}
+
+                        <Controller
+                            name="cpfCnpj"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <InputText
+                                        id={field.name}
+                                        value={field.value}
+                                        className={classNames({ 'p-invalid': fieldState.error })}
+                                        onChange={(e) => field.onChange(e.target.value)}
+                                        placeholder="CPF/CNPJ"
+                                        ref={refCpfCnpj}
+                                        keyfilter="pint"
+                                        maxLength={14}
+                                    />
+                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+
+                                </>
+                            )}
                         />
 
                         <Controller
@@ -602,7 +667,8 @@ export default function Grid() {
                                         onChange={(e) => field.onChange(e.target.value)}
                                         maxLength={60}
                                         placeholder='Nome/Razão Social'
-                                        autoFocus
+                                        // autoFocus
+                                        hidden={hiddenAcessoAdministrativo}
                                     />
                                     {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
 
@@ -622,6 +688,7 @@ export default function Grid() {
                                         onChange={(e) => field.onChange(e.target.value)}
                                         maxLength={60}
                                         placeholder='Usuário do Sistema'
+                                        hidden={hiddenAcessoAdministrativo}
                                     />
                                     {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
 
@@ -629,7 +696,9 @@ export default function Grid() {
                             )}
                         />
 
-                        <Button type='button' label="Filtrar" icon="pi pi-filter" onClick={handleFiltrar} />
+                        <div hidden={hiddenAcessoAdministrativo}>
+                            <Button type='button' label="Filtrar" icon="pi pi-filter" onClick={handleFiltrar} />
+                        </div>
 
                     </div>
 
@@ -637,7 +706,7 @@ export default function Grid() {
 
             </div>
 
-            <div className="mt-2">
+            <div className="mt-2" hidden={hiddenAcessoAdministrativo}>
 
                 <div className="md:hidden">
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
@@ -667,6 +736,10 @@ export default function Grid() {
                 <div className="flex justify-center mt-2 gap-2">
                     <Paginator first={getValues('primeiro')} rows={getValues('linhas')} totalRecords={getValues('totalRegistros')} rowsPerPageOptions={[10, 20, 30]} onPageChange={onPageChange} />
                 </div>
+
+            </div>
+
+            <div className="mt-2">
 
                 <Divider />
 

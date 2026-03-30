@@ -93,12 +93,12 @@ export async function getById(pId: number, pOffSet: number) {
 
         if (pId === 0) {
 
-            if (await acessoModulosOpcoes('frmConsultaClientes', 2) == false) {
-                return {
-                    dados: {},
-                    erro: 'Acesso Negado!'
-                }
-            }
+            // if (await acessoModulosOpcoes('frmConsultaClientes', 2) == false) {
+            //     return {
+            //         dados: {},
+            //         erro: 'Acesso Negado!'
+            //     }
+            // }
 
             resposta = {
                 id: 0,
@@ -120,12 +120,12 @@ export async function getById(pId: number, pOffSet: number) {
 
         } else {
 
-            if (await acessoModulosOpcoes('frmConsultaClientes', 1) == false) {
-                return {
-                    dados: {},
-                    erro: 'Acesso Negado!'
-                }
-            }
+            // if (await acessoModulosOpcoes('frmConsultaClientes', 1) == false) {
+            //     return {
+            //         dados: {},
+            //         erro: 'Acesso Negado!'
+            //     }
+            // }
 
             resposta = await prisma.tccConsultaCliente.findUnique({
                 where: {
@@ -162,11 +162,11 @@ export async function postPut(pDados: consultaClientesType, pOffSet: number) {
 
     try {
 
-        if (await acessoModulosOpcoes('frmConsultaClientes', 2) == false) {
-            return {
-                erro: 'Acesso Negado!'
-            }
-        }
+        // if (await acessoModulosOpcoes('frmConsultaClientes', 2) == false) {
+        //     return {
+        //         erro: 'Acesso Negado!'
+        //     }
+        // }
 
         const lClaims: claimsType = await getClaims()
 
@@ -220,6 +220,14 @@ export async function getCrednetPP(pCpfCnpj: string) {
 
     try {
 
+        if (await acessoModulosOpcoes('frmConsultaClientes', 1) == false) {
+            return {
+                dados: [],
+                total_registros: 0,
+                erro: 'Acesso Negado!'
+            }
+        }
+
         const baseUrl = process.env.API_GREGLINE_URL
         const apiKey = process.env.API_GREGLINE_KEY
         const apiChave = process.env.API_GREGLINE_CHAVE
@@ -227,6 +235,7 @@ export async function getCrednetPP(pCpfCnpj: string) {
 
         let lCpfCnpj = ''
         let lParametros = null
+
         if (pCpfCnpj.length == 11) {
 
             lCpfCnpj = "CPF"
@@ -241,7 +250,7 @@ export async function getCrednetPP(pCpfCnpj: string) {
                     "NumeroDocumento": "",
                 },
                 "CrednetPP": {
-                    "AnotacoesCompletas": true,
+                    // "AnotacoesCompletas": true,
                     "SerasaScorePF": true,
                     // "RendaProPF": true,
                     // "SerasaScorePJ": true,
@@ -265,7 +274,7 @@ export async function getCrednetPP(pCpfCnpj: string) {
                     "NumeroDocumento": "",
                 },
                 "CrednetPP": {
-                    "AnotacoesCompletas": true,
+                    // "AnotacoesCompletas": true,
                     // "SerasaScorePF": true,
                     // "RendaProPF": true,
                     "SerasaScorePJ": true,
