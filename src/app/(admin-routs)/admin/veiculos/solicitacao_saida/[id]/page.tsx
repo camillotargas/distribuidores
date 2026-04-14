@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 
 import { saidasRetornosVeiculosType, saidasRetornosVeiculosSchema } from '@/types/veiculos/saidas_retornos_veiculos'
 import { codigoNomeType } from '@/types/sistema/codigoNome'
-import { postPut, getById } from '@/actions/veiculos/saidas_retornos_veiculos'
+import { post, getById } from '@/actions/veiculos/solicitacao_saida'
 
 import { classNames } from 'primereact/utils'
 import { Button } from 'primereact/button'
@@ -29,10 +29,13 @@ import { Panel } from 'primereact/panel'
 
 import { getComboBox as getComboBoxVeiculos } from '@/actions/veiculos/veiculos'
 import { getComboBox as getComboBoxDestinos } from '@/actions/sistema/cidades'
-import { getComboBox as getComboBoxSolicitantes } from '@/actions/basico/usuarios_sistema'
-import { getComboBox as getComboBoxAutorizadores } from '@/actions/basico/usuarios_sistema'
+import { getByIdFree, getComboBox as getComboBoxSolicitantes } from '@/actions/basico/usuarios_sistema'
+import { getComboBoxSaidasRetornosVeiculosAutorizadores as getComboBoxAutorizadores } from '@/actions/basico/usuarios_sistema'
 import { getComboBox as getComboBoxEmpresas } from '@/actions/basico/empresas'
 import Link from 'next/link'
+import { claimsType } from '@/types/sistema/claims'
+import { getClaims } from '@/actions/sistema/acesso_sistema'
+import { usuariosSistemaType } from '@/types/basico/usuarios_sistema'
 
 export default function Formulario() {
 
@@ -91,7 +94,7 @@ export default function Formulario() {
     async function onSubmit(dados: saidasRetornosVeiculosType) {
 
         setIsLoading(true)
-        const retorno: any = await postPut(dados, offSet)
+        const retorno: any = await post(dados, offSet)
         setIsLoading(false)
 
         if (retorno.erro !== '') {
@@ -157,12 +160,28 @@ export default function Formulario() {
 
             setIsLoading(true)
 
+            const lClaims: claimsType = await getClaims()
+
+            const retornoUsuarioSistema = await getByIdFree(Number(lClaims.usuarioSistemaId), offSet)
+            let lUsuarioSistema: usuariosSistemaType = {} as usuariosSistemaType
+
+            if (retornoUsuarioSistema.erro !== '') {
+                setIsLoading(false)
+                messages.current?.clear()
+                messages.current?.show({ id: '1', sticky: true, severity: 'error', summary: 'Erro', detail: retornoUsuarioSistema.erro, closable: false })
+                lUsuarioSistema = {} as usuariosSistemaType
+            } else {
+                messages.current?.clear()
+                lUsuarioSistema = retornoUsuarioSistema.dados as usuariosSistemaType
+                setIsLoading(false)
+            }
+
             // autocompletar
-            setVeiculoSelecionado((await getComboBoxVeiculos(getValues('veiculoId'), ''))[0])
-            setDestinoSelecionado((await getComboBoxDestinos(getValues('destinoId'), ''))[0])
-            setSolicitanteSelecionado((await getComboBoxSolicitantes(getValues('solicitanteId'), ''))[0])
-            setAutorizadorSelecionado((await getComboBoxAutorizadores(getValues('autorizadorId'), ''))[0])
-            setEmpresaSelecionada((await getComboBoxEmpresas(getValues('empresaId'), ''))[0])
+            // setVeiculoSelecionado((await getComboBoxVeiculos(getValues('veiculoId'), ''))[0])
+            // setDestinoSelecionado((await getComboBoxDestinos(getValues('destinoId'), ''))[0])
+            setSolicitanteSelecionado((await getComboBoxSolicitantes(Number(lClaims.usuarioSistemaId), ''))[0])
+            // setAutorizadorSelecionado((await getComboBoxAutorizadores(getValues('autorizadorId'), ''))[0])
+            setEmpresaSelecionada((await getComboBoxEmpresas(lUsuarioSistema.empresaId, ''))[0])
 
             setIsLoading(false)
 

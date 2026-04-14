@@ -221,7 +221,7 @@ export async function getComboBox(pId: number, pNome: string) {
       resposta = await prisma.tbaEmpresa.findUnique({
         select: {
           id: true,
-          razaoSocial: true,
+          nomeFantasia: true,
           status: true,
         },
         where: {
@@ -243,13 +243,13 @@ export async function getComboBox(pId: number, pNome: string) {
         take: 10,
         where: {
           clienteSistemaId: parseInt(lClaims.clienteSistemaId),
-          razaoSocial: {
+          nomeFantasia: {
             contains: pNome,
             mode: 'insensitive'
           }
         },
         orderBy: [
-          { razaoSocial: 'asc', },
+          { nomeFantasia: 'asc', },
           { id: 'asc' },
         ]
       })
@@ -262,7 +262,7 @@ export async function getComboBox(pId: number, pNome: string) {
     if (resposta.length > 0) {
       respostaComboBox = resposta!.map((registro: empresasType) => ({
         id: registro.id,
-        nome: registro.razaoSocial,
+        nome: registro.nomeFantasia,
         status: registro.status,
       }))
     }

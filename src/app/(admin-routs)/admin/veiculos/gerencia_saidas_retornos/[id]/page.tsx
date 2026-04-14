@@ -36,7 +36,7 @@ import { getComboBoxSaidasRetornosVeiculosPorteiros } from '@/actions/basico/usu
 import { getComboBox as getComboBoxEmpresas } from '@/actions/basico/empresas'
 import { getClaims } from '@/actions/sistema/acesso_sistema'
 import { usuariosSistemaType } from '@/types/basico/usuarios_sistema'
-import { getFreeById as getFreeByIdUsuariosSistema } from '@/actions/basico/usuarios_sistema'
+import { getByIdFree as getByIdFreeUsuariosSistema } from '@/actions/basico/usuarios_sistema'
 import { confirmDialog } from 'primereact/confirmdialog'
 import { getRandomValues } from 'crypto'
 
@@ -290,7 +290,7 @@ export default function Formulario() {
 
             } else if (Number(lClaims.usuarioSistemaId) > 0) {
 
-                const retornoUsuarioSistema = (await getFreeByIdUsuariosSistema(Number(lClaims.usuarioSistemaId), offSet))
+                const retornoUsuarioSistema = (await getByIdFreeUsuariosSistema(Number(lClaims.usuarioSistemaId), offSet))
 
                 if (retornoUsuarioSistema.erro !== '') {
 

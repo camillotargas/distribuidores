@@ -311,7 +311,7 @@ export async function getComboBoxSaidasRetornosVeiculosAutorizadores(pId: number
         where: {
           clienteSistemaId: parseInt(lClaims.clienteSistemaId),
           id: pId,
-          saidasRetornosVeiculosAutorizador: 'S',
+          // saidasRetornosVeiculosAutorizador: 'S',
         },
       })
 
@@ -331,7 +331,8 @@ export async function getComboBoxSaidasRetornosVeiculosAutorizadores(pId: number
           nome: {
             contains: pNome,
             mode: 'insensitive'
-          }
+          },
+          saidasRetornosVeiculosAutorizador: 'S',
         },
         orderBy: [
           { nome: 'asc', },
@@ -374,7 +375,7 @@ export async function getComboBoxSaidasRetornosVeiculosPorteiros(pId: number | n
         where: {
           clienteSistemaId: parseInt(lClaims.clienteSistemaId),
           id: pId,
-          saidasRetornosVeiculosPorteiro: 'S',
+          // saidasRetornosVeiculosPorteiro: 'S',
         },
       })
 
@@ -394,7 +395,8 @@ export async function getComboBoxSaidasRetornosVeiculosPorteiros(pId: number | n
           nome: {
             contains: pNome,
             mode: 'insensitive'
-          }
+          },
+          saidasRetornosVeiculosPorteiro: 'S',
         },
         orderBy: [
           { nome: 'asc', },
@@ -456,7 +458,7 @@ export async function updateDataHoraCadastroById(pId: number, pOffSet: number) {
 
 }
 
-export async function getFreeById(pId: number, pOffSet: number) {
+export async function getByIdFree(pId: number, pOffSet: number) {
 
   try {
 
@@ -482,7 +484,7 @@ export async function getFreeById(pId: number, pOffSet: number) {
 
     return {
       dados: {},
-      erro: 'getFreeById: ' + error
+      erro: 'getByIdFree: ' + error
     }
 
   }

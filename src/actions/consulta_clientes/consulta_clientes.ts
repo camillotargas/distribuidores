@@ -252,6 +252,7 @@ export async function getCrednetPP(pCpfCnpj: string) {
                 "CrednetPP": {
                     // "AnotacoesCompletas": true,
                     "SerasaScorePF": true,
+                    "ProtestoEstadualUF": "CE",
                     // "RendaProPF": true,
                     // "SerasaScorePJ": true,
                     // "FaturamentoPresumidoPJ_PP": true,
@@ -278,6 +279,7 @@ export async function getCrednetPP(pCpfCnpj: string) {
                     // "SerasaScorePF": true,
                     // "RendaProPF": true,
                     "SerasaScorePJ": true,
+                    "ProtestoEstadualUF": "CE",
                     // "FaturamentoPresumidoPJ_PP": true,
                     // "HistoricoPagamentoFinanceiroBasico": true,
                     // "ResumoPositivoComercial": true

@@ -6,7 +6,7 @@ import uData from '@/utils/uData'
 import { acessoModulosOpcoes, getClaims } from '@/actions/sistema/acesso_sistema'
 import { prisma } from '@/lib/prisma'
 import { claimsType } from '@/types/sistema/claims'
-import { getFreeById } from '../basico/usuarios_sistema'
+import { getByIdFree } from '../basico/usuarios_sistema'
 import { usuariosSistemaType } from '@/types/basico/usuarios_sistema'
 
 export async function getAll(pPrimeiro: number, pLinhas: number, pEmpresaId: number, pSolicitante: string, pAutorizador: string, pSituacao: number) {
@@ -143,7 +143,7 @@ export async function getById(pId: number, pOffSet: number) {
 
       let lDadosUsuario: usuariosSistemaType = {} as usuariosSistemaType
 
-      const lRetornoUsuario = await getFreeById(parseInt(lClaims.usuarioSistemaId), pOffSet)
+      const lRetornoUsuario = await getByIdFree(parseInt(lClaims.usuarioSistemaId), pOffSet)
       if (lRetornoUsuario.erro !== '') {
         lDadosUsuario = lRetornoUsuario.dados as usuariosSistemaType
       }
@@ -264,11 +264,11 @@ export async function postPut(pDados: saidasRetornosVeiculosType, pOffSet: numbe
 
     if (resposta) {
       if (pDados.id == 0) {
-        console.log('Inclusão')
+        // console.log('Inclusão')
         return { erro: 'Este solicitante tem processo em andamento no ID: ' + resposta.id }
       } else {
         if (pDados.id !== resposta.id) {
-          console.log('Alteração')
+          // console.log('Alteração')
           return { erro: 'Este solicitante tem processo em andamento no ID: ' + resposta.id }
         }
       }
