@@ -81,7 +81,7 @@ export default function Formulario() {
             setDados({} as saidasRetornosVeiculosType)
         } else {
             messages.current?.clear()
-            setDados(retorno.dados as saidasRetornosVeiculosType)
+            // setDados(retorno.dados as saidasRetornosVeiculosType)
             setIsLoading(false)
         }
 
