@@ -126,6 +126,21 @@ const uTexto = {
         return str.substring(index + 1);
     },
 
+    ajustaDuasCasasAposPonto(valor: string): string {
+
+        if (valor == '') return ''
+
+        if (!valor.toString().includes('.')) return valor
+
+        const [inteiro, decimal] = valor.toString().split('.')
+
+        if (decimal.length === 1) {
+            return `${inteiro}.${decimal}0`
+        }
+
+        return valor
+    },
+
 
 }
 

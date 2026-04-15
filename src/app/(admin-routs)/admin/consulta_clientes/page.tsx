@@ -259,7 +259,8 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(uTexto.removerCaracteresNaoNumericos(item.Valor) || '0') / 100
+                let lValorCasasCorrigidas = uTexto.ajustaDuasCasasAposPonto(item.Valor)
+                lValor = Number(uTexto.removerCaracteresNaoNumericos(lValorCasasCorrigidas) || '0') / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
@@ -296,7 +297,8 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(uTexto.removerCaracteresNaoNumericos(item.Valor) || '0') / 100
+                let lValorCasasCorrigidas = uTexto.ajustaDuasCasasAposPonto(item.Valor)
+                lValor = Number(uTexto.removerCaracteresNaoNumericos(lValorCasasCorrigidas) || '0') / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
@@ -333,7 +335,8 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(uTexto.removerCaracteresNaoNumericos(item.Valor) || '0') / 100
+                let lValorCasasCorrigidas = uTexto.ajustaDuasCasasAposPonto(item.Valor)
+                lValor = Number(uTexto.removerCaracteresNaoNumericos(lValorCasasCorrigidas) || '0') / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
@@ -371,7 +374,8 @@ export default function Grid() {
             texto = texto + '\n'
 
             let lValor = 0
-            lValor = Number(uTexto.removerCaracteresNaoNumericos(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal) || '0') / 100
+            let lValorCasasCorrigidas = uTexto.ajustaDuasCasasAposPonto(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal)
+            lValor = Number(uTexto.removerCaracteresNaoNumericos(lValorCasasCorrigidas) || '0') / 100
             texto = texto + 'Valor Total: ' + uNumero.formataNumero(lValor, 2, false)
             texto = texto + '\n'
 
