@@ -38,6 +38,7 @@ import { ProgressBar } from 'primereact/progressbar'
 import { MeterGroup } from 'primereact/metergroup'
 import { acessoModulosOpcoes, getClaims } from '@/actions/sistema/acesso_sistema'
 import { usuariosSistemaType } from '@/types/basico/usuarios_sistema'
+import uTexto from '@/utils/uTexto'
 
 export default function Grid() {
 
@@ -258,7 +259,7 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(item.Valor.replaceAll('.', '')) / 100
+                lValor = Number(uTexto.removerCaracteresNaoNumericos(item.Valor) || '0') / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
@@ -295,7 +296,7 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(item.Valor.replaceAll('.', '')) / 100
+                lValor = Number(uTexto.removerCaracteresNaoNumericos(item.Valor) || '0') / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
@@ -332,7 +333,7 @@ export default function Grid() {
                 texto = texto + '\n'
 
                 let lValor = 0
-                lValor = Number(item.Valor.replaceAll('.', '')) / 100
+                lValor = Number(uTexto.removerCaracteresNaoNumericos(item.Valor) || '0') / 100
                 texto = texto + 'Valor: ' + uNumero.formataNumero(lValor, 2, false)
                 texto = texto + '\n'
 
@@ -370,7 +371,7 @@ export default function Grid() {
             texto = texto + '\n'
 
             let lValor = 0
-            lValor = Number(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal.replaceAll('.', '')) / 100
+            lValor = Number(uTexto.removerCaracteresNaoNumericos(pDados.ProtocoloB49C.N250_90_OUT.ValorTotal) || '0') / 100
             texto = texto + 'Valor Total: ' + uNumero.formataNumero(lValor, 2, false)
             texto = texto + '\n'
 

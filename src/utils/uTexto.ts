@@ -82,7 +82,13 @@ const uTexto = {
     },
 
     removerCaracteresNaoNumericos(texto: string) {
-        return texto.replace(/[^0-9]/g, "");
+        // return texto.replace(/[^0-9]/g, "");
+        if (texto == '')
+            return ''
+        else {
+            return texto.toString().replace(/\D/g, '')
+        }
+
     },
 
     // detectaTipo(value: any) {
