@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 
-import { getAll } from '@/actions/basico/perfis_usuarios_sistema'
+import { getAll } from '@/actions/veiculos/veiculos'
+import { veiculosType } from '@/types/veiculos/veiculos'
 
 import Link from 'next/link'
 
@@ -24,8 +25,9 @@ import PageSubTitle from '@/components/pageSubTitle'
 
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator'
 import { InputText } from 'primereact/inputtext'
-import { Divider } from 'primereact/divider'
 import { Tag } from 'primereact/tag'
+import { Divider } from 'primereact/divider'
+import uTexto from '@/utils/uTexto'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function Grid() {
@@ -36,13 +38,12 @@ export default function Grid() {
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const urlBase = '/admin/basico/perfis_usuarios_sistema'
+    const urlBase = '/admin/cadastros/veiculos/veiculos'
     const pPrimeiro = Number(searchParams.get('primeiro')) || 0
     const pLinhas = Number(searchParams.get('linhas')) || 10
-
     const pNome = searchParams.get('nome') || ''
 
-    const botoesDataTable = (dados: any) => {
+    const botoesDataTable = (dados: veiculosType) => {
         return (
             <>
                 <Button type='button' icon='pi pi-pencil' size='small' onClick={() => { handleAlterar(dados.id!) }} />
@@ -50,7 +51,29 @@ export default function Grid() {
         )
     }
 
-    const formataStatus = (dados: any) => {
+    const formataSituacaoManutencao = (dados: veiculosType) => {
+
+        if (dados.situacaoManutencao == 1) {
+            return <Tag value={'1-Manutenção em Dia'} severity={'success'} icon="pi pi-check"></Tag>
+        } else if (dados.situacaoManutencao == 2) {
+            return <Tag value={'2-Próximo de Manutenção Preventiva'} severity={'warning'} icon="pi pi-exclamation-triangle"></Tag>
+        } else if (dados.situacaoManutencao == 3) {
+            return <Tag value={'3-Em Manutenção Preventiva'} severity={'success'} icon="pi pi-check-circle"></Tag>
+        } else if (dados.situacaoManutencao == 4) {
+            return <Tag value={'4-Em Manutenção Corretiva'} severity={'success'} icon="pi pi-check-circle"></Tag>
+        }
+
+    }
+
+    const formataDisponivel = (dados: veiculosType) => {
+        return (
+            <>
+                <Tag value={dados.disponivel == 'S' ? 'Sim' : 'Não'} severity={dados.disponivel == 'S' ? 'success' : 'danger'}></Tag>
+            </>
+        )
+    }
+
+    const formataStatus = (dados: veiculosType) => {
         return (
             <>
                 <Tag value={dados.status == 'A' ? 'Ativo' : 'Inativo'} severity={dados.status == 'A' ? 'success' : 'danger'}></Tag>
@@ -68,7 +91,7 @@ export default function Grid() {
 
     type filtrosType = z.infer<typeof filtrosSchema>
 
-    const { control, handleSubmit, formState: { errors }, getValues, setValue } = useForm<filtrosType>({
+    const { control, handleSubmit, reset, formState: { errors }, setValue, getValues } = useForm<filtrosType>({
         resolver: zodResolver(filtrosSchema),
         defaultValues: {
             primeiro: 0,
@@ -148,8 +171,8 @@ export default function Grid() {
 
         <div className='mx-3'>
 
-            <PageTitle texto="Básico" />
-            <PageSubTitle texto="Cadastro de Perfis de Usuários do Sistema" />
+            <PageTitle texto="Veículos" />
+            <PageSubTitle texto="Veículos" />
 
             <Divider />
 
@@ -171,7 +194,8 @@ export default function Grid() {
                                         value={field.value}
                                         className={classNames({ 'p-invalid': fieldState.error })}
                                         onChange={(e) => field.onChange(e.target.value)}
-                                        maxLength={40}
+                                        maxLength={30}
+                                        placeholder='Placa'
                                         autoFocus
                                     />
                                     {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
@@ -193,7 +217,8 @@ export default function Grid() {
                 <div className="md:hidden">
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
                         <Column field="id" header="ID" sortable></Column>
-                        <Column field="nome" header="Nome" sortable></Column>
+                        <Column field="placa" header="Placa" sortable></Column>
+                        <Column body={formataDisponivel} header="Disponível" sortable></Column>
                         <Column body={formataStatus} header="Status" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
@@ -202,7 +227,11 @@ export default function Grid() {
                 <div className="hidden md:block" >
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
                         <Column field="id" header="ID" sortable></Column>
-                        <Column field="nome" header="Nome" sortable></Column>
+                        <Column field="tveMarca.nome" header="Marca" sortable></Column>
+                        <Column field="tveModelo.nome" header="Modelo" sortable></Column>
+                        <Column field="placa" header="Placa" sortable></Column>
+                        <Column body={formataSituacaoManutencao} header="Situação Manutenção" sortable></Column>
+                        <Column body={formataDisponivel} header="Disponível" sortable></Column>
                         <Column body={formataStatus} header="Status" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>

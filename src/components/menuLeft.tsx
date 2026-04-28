@@ -42,7 +42,7 @@ export default function MenuLeft() {
         {
             label: 'Consulta de Clientes',
             icon: 'pi pi-search',
-            url: '/admin/consulta_clientes'
+            url: '/admin/consultas/consulta_clientes'
         },
         {
             label: 'Cadastros',
@@ -54,10 +54,10 @@ export default function MenuLeft() {
                     // icon: 'pi pi-file',
                     items: [
 
-                        { label: 'Usuários do Sistema', url: '/admin/basico/usuarios_sistema' },
-                        { label: 'Perfis de Usuários do Sistema', url: '/admin/basico/perfis_usuarios_sistema' },
-                        { label: 'Empresas', url: '/admin/basico/empresas' },
-                        { label: 'Setores', url: '/admin/basico/setores' },
+                        { label: 'Usuários do Sistema', url: '/admin/cadastros/basico/usuarios_sistema' },
+                        { label: 'Perfis de Usuários do Sistema', url: '/admin/cadastros/basico/perfis_usuarios_sistema' },
+                        { label: 'Empresas', url: '/admin/cadastros/basico/empresas' },
+                        { label: 'Setores', url: '/admin/cadastros/basico/setores' },
 
                     ],
 
@@ -68,8 +68,8 @@ export default function MenuLeft() {
                     // icon: 'pi pi-file',
                     items: [
 
-                        { label: 'Marcas e Modelos', url: '/admin/veiculos/marcas_modelos' },
-                        { label: 'Veículos', url: '/admin/veiculos/veiculos' },
+                        { label: 'Marcas e Modelos', url: '/admin/cadastros/veiculos/marcas_modelos' },
+                        { label: 'Veículos', url: '/admin/cadastros/veiculos/veiculos' },
 
                     ]
 
@@ -87,9 +87,9 @@ export default function MenuLeft() {
                     // icon: 'pi pi-file',
                     items: [
 
-                        { label: 'Manutenções', url: '/admin/veiculos/manutencoes' },
-                        { label: 'Solicitação de Saída de Veículo', url: '/admin/veiculos/solicitacao_saida/0' },
-                        { label: 'Gerência de Saídas e Retorno de Veiculos', url: '/admin/veiculos/gerencia_saidas_retornos' },
+                        { label: 'Manutenções', url: '/admin/processos/veiculos/manutencoes' },
+                        { label: 'Solicitação de Saída de Veículo', url: '/admin/processos/veiculos/solicitacao_saida/0' },
+                        { label: 'Gerência de Saídas e Retorno de Veiculos', url: '/admin/processos/veiculos/gerencia_saidas_retornos' },
 
                     ],
 

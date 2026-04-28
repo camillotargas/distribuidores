@@ -11,7 +11,6 @@ import { Button } from 'primereact/button'
 import { InputNumber } from 'primereact/inputnumber'
 import { InputText } from 'primereact/inputtext'
 import { Calendar } from 'primereact/calendar'
-import { Dropdown } from 'primereact/dropdown'
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import React, { useState, useRef, useEffect } from 'react'
@@ -26,8 +25,14 @@ import { Divider } from 'primereact/divider'
 import { logicoNomeType } from '@/types/sistema/logicoNome'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { Message } from 'primereact/message'
+
+import { Document, Page, Text, StyleSheet, PDFViewer, View } from "@react-pdf/renderer"; // Other react-pdf components can be imported normally
+import { styles } from '@/reports/estilos'
+import { Cabecalho } from "@/reports/cabecalho"
+import { Rodape } from "@/reports/rodape"
+import { claimsType } from '@/types/sistema/claims'
 import { getClaims } from '@/actions/sistema/acesso_sistema'
-import { usuariosSistemaType } from '@/types/basico/usuarios_sistema'
+import { pdf } from '@react-pdf/renderer'
 
 export default function Formulario() {
 
@@ -37,13 +42,45 @@ export default function Formulario() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState<Boolean>(false)
     const messages = useRef<Messages>(null);
-    const [dados, setDados] = useState<consultaClientesType>({} as consultaClientesType);
+    const [dados, setDados] = useState<consultaClientesType>({} as consultaClientesType)
+    const [claims, setClaims] = useState<claimsType>({} as claimsType)
 
     const { control, handleSubmit, formState: { errors }, setValue, getValues, trigger } = useForm<consultaClientesType>({
         defaultValues: dados,
         values: dados,
         resolver: zodResolver(consultaClientesSchema)
     })
+
+    const Relatorio = ({ pDados, pClaims }: { pDados: consultaClientesType, pClaims: claimsType }) => (
+
+        <Document>
+
+            <Page size="A4" orientation='landscape' style={styles.page}>
+
+                {/* Cabeçalho */}
+                <Cabecalho
+                    empresa={pClaims.clienteSistemaNome}
+                    titulo="Consulta a Cliente"
+                />
+
+                {/* Filtro */}
+
+                {/* Dados */}
+                <View style={styles.linhaEmBranco} />
+                <View style={[styles.linha]}>
+                    <Text style={[styles.textoTamanho10]}> {pDados.resultadoConsulta} </Text>
+                </View>
+
+                {/* Rodapé */}
+                <Rodape
+                    usuarioSistema={claims.usuarioSistemaNome}
+                />
+
+            </Page>
+
+        </Document >
+
+    )
 
     async function buscaDados() {
 
@@ -63,8 +100,18 @@ export default function Formulario() {
 
     }
 
-    function imprimir() {
-        alert('imprimir')
+    async function handleImprimir() {
+        setIsLoading(true)
+
+        const blob = await pdf(<Relatorio pDados={dados} pClaims={claims} />).toBlob()
+
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = 'relatorio.pdf'
+        link.click()
+
+        setIsLoading(false)
     }
 
     function mensagemConstaOcorrencias(pConstaOcorrencia: boolean) {
@@ -88,9 +135,15 @@ export default function Formulario() {
         { logico: false, nome: 'Não' },
     ]
 
+    // Clain
+    async function buscaClaims() {
+        const lClaims: claimsType = await getClaims()
+        setClaims(lClaims)
+    }
 
     useEffect(() => {
         buscaDados()
+        buscaClaims()
     }, [])
 
     return (
@@ -345,10 +398,18 @@ export default function Formulario() {
 
                 <div className="flex justify-center mt-2 gap-2">
 
-                    {/* <Button label="Gerar PDF" type="button" icon="pi pi-file-pdf" onClick={imprimir} /> */}
+                    <Button label="Gerar PDF" type="button" icon="pi pi-file-pdf" onClick={handleImprimir} />
                     <Button label="Voltar" type="button" icon="pi pi-arrow-left" onClick={router.back} />
 
                 </div>
+
+                {/* <div className="h-screen mt-2">
+                    {
+                        <PDFViewer width="100%" height="100%">
+                            <Relatorio pDados={dados} pClaims={claims} />
+                        </PDFViewer>
+                    }
+                </div> */}
 
             </form>
 

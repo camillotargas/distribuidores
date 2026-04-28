@@ -43,7 +43,7 @@ export default function Grid() {
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const urlBase = '/admin/veiculos/manutencoes'
+    const urlBase = '/admin/processos/veiculos/manutencoes'
     const pPrimeiro = Number(searchParams.get('primeiro')) || 0
     const pLinhas = Number(searchParams.get('linhas')) || 10
     const pNome = searchParams.get('nome') || ''

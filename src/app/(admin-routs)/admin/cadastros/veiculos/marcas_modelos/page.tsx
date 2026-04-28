@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 
-import { getAll } from '@/actions/basico/setores'
-import { setoresType } from '@/types/basico/setores'
+import { getAll } from '@/actions/veiculos/marcas_modelos'
+import { marcasType } from '@/types/veiculos/marcas_modelos'
 
 import Link from 'next/link'
 
@@ -14,9 +14,9 @@ import { Column } from 'primereact/column'
 
 import { classNames } from 'primereact/utils'
 
-import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { zodResolver } from "@hookform/resolvers/zod"
+import { Controller, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 import { Messages } from 'primereact/messages'
 import Loading from '@/components/loading'
@@ -26,32 +26,22 @@ import PageSubTitle from '@/components/pageSubTitle'
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator'
 import { InputText } from 'primereact/inputtext'
 import { Tag } from 'primereact/tag'
-import { Divider } from 'primereact/divider'
-import { comboBoxType } from '@/types/sistema/combobox'
-import { Dropdown } from 'primereact/dropdown'
-import { getComboBox as empresasGetComboBox } from '@/actions/basico/empresas'
-
-import { useRouter } from 'next/navigation'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function Grid() {
 
-    const [dados, setDados] = useState<setoresType[]>([])
+    const [dados, setDados] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState<Boolean>(false)
     const messages = useRef<Messages>(null)
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const urlBase = '/admin/basico/setores'
+    const urlBase = '/admin/cadastros/veiculos/marcas_modelos'
     const pPrimeiro = Number(searchParams.get('primeiro')) || 0
     const pLinhas = Number(searchParams.get('linhas')) || 10
-
-    const pEmpresaId = Number(searchParams.get('empresa_id')) || 0
     const pNome = searchParams.get('nome') || ''
 
-    const [listaEmpresas, setListaEmpresas] = useState<comboBoxType[]>([])
-
-    const botoesDataTable = (dados: setoresType) => {
+    const botoesDataTable = (dados: marcasType) => {
         return (
             <>
                 <Button type='button' icon='pi pi-pencil' size='small' onClick={() => { handleAlterar(dados.id!) }} />
@@ -59,7 +49,7 @@ export default function Grid() {
         )
     }
 
-    const formataStatus = (dados: setoresType) => {
+    const formataStatus = (dados: marcasType) => {
         return (
             <>
                 <Tag value={dados.status == 'A' ? 'Ativo' : 'Inativo'} severity={dados.status == 'A' ? 'success' : 'danger'}></Tag>
@@ -68,24 +58,22 @@ export default function Grid() {
     }
 
     const filtrosSchema = z.object({
-        pPrimeiro: z.number(),
-        pLinhas: z.number(),
-        pTotalRegistros: z.number(),
-        pId: z.number(),
-        empresaId: z.number({ required_error: "Campo Obrigatório", invalid_type_error: "Campo Obrigatório" }).min(1, { message: 'Campo Obrigatório' }),
+        primeiro: z.number(),
+        linhas: z.number(),
+        totalRegistros: z.number(),
+        id: z.number(),
         nome: z.string(),
     })
 
     type filtrosType = z.infer<typeof filtrosSchema>
 
-    const { control, handleSubmit, formState: { errors }, setValue, getValues, trigger } = useForm<filtrosType>({
+    const { control, handleSubmit, formState: { errors }, getValues, setValue } = useForm<filtrosType>({
         resolver: zodResolver(filtrosSchema),
         defaultValues: {
-            pPrimeiro: 0,
-            pLinhas: 10,
-            pTotalRegistros: 0,
-            pId: 0,
-            empresaId: 0,
+            primeiro: 0,
+            linhas: 10,
+            totalRegistros: 0,
+            id: 0,
             nome: ''
         }
     })
@@ -93,25 +81,32 @@ export default function Grid() {
     async function filtra(filtros: filtrosType) {
 
         setIsLoading(true)
-        const resposta = await getAll(filtros.pPrimeiro, filtros.pLinhas, filtros.nome, filtros.empresaId)
+        const resposta = await getAll(filtros.primeiro, filtros.linhas, filtros.nome)
 
         if (resposta.erro !== '') {
             setIsLoading(false)
             messages.current?.clear()
             messages.current?.show({ id: '1', sticky: true, severity: 'error', summary: 'Erro', detail: resposta.erro, closable: false })
             setDados([])
-            setValue('pTotalRegistros', 0)
+            setValue('totalRegistros', 0)
         } else {
             messages.current?.clear()
             setDados(resposta.dados)
-            setValue('pTotalRegistros', resposta.total_registros)
+            setValue('totalRegistros', resposta.total_registros)
             setIsLoading(false)
         }
 
     }
 
     function ajustaUrl() {
-        router.push(urlBase + '?primeiro=' + getValues('pPrimeiro') + '&linhas=' + getValues('pLinhas') + '&empresa_id=' + getValues('empresaId') + '&nome=' + getValues('nome'))
+        router.push(urlBase + '?primeiro=' + getValues('primeiro') + '&linhas=' + getValues('linhas') + '&nome=' + getValues('nome'))
+    }
+
+    const onPageChange = (event: PaginatorPageChangeEvent) => {
+        setValue('primeiro', event.first)
+        setValue('linhas', event.rows)
+        filtra(getValues())
+        ajustaUrl()
     }
 
     function handleFiltrar() {
@@ -120,7 +115,7 @@ export default function Grid() {
     }
 
     function inclui() {
-        router.push(urlBase + '/0/' + getValues('empresaId'))
+        router.push(urlBase + '/0')
     }
 
     function handleIncluir() {
@@ -128,35 +123,22 @@ export default function Grid() {
     }
 
     function altera() {
-        router.push(urlBase + '/' + getValues('pId') + '/' + getValues('empresaId'))
+        router.push(urlBase + '/' + getValues('id'))
     }
 
     function handleAlterar(id: number) {
-        setValue('pId', id)
+        setValue('id', id)
         handleSubmit(altera)()
-    }
-
-    const onPageChange = (event: PaginatorPageChangeEvent) => {
-        setValue('pPrimeiro', event.first)
-        setValue('pLinhas', event.rows)
-        filtra(getValues())
-        ajustaUrl()
-    }
-
-    const buscaEmpresas = async () => {
-        setListaEmpresas((await empresasGetComboBox(0, '')))
     }
 
     useEffect(() => {
 
-        setValue('pPrimeiro', pPrimeiro)
-        setValue('pLinhas', pLinhas)
-        setValue('pTotalRegistros', 0)
+        setValue('primeiro', pPrimeiro)
+        setValue('linhas', pLinhas)
+        setValue('totalRegistros', 0)
 
         setValue('nome', pNome)
-        setValue('empresaId', pEmpresaId)
 
-        buscaEmpresas()
         filtra(getValues())
 
     }, [])
@@ -165,44 +147,16 @@ export default function Grid() {
 
         <div className='mx-3'>
 
-            <PageTitle texto="Pesquisas" />
-            <PageSubTitle texto="Setores" />
-
-            <Divider />
+            <PageTitle texto="Veículos" />
+            <PageSubTitle texto="Cadastro de Marcas e Modelos" />
 
             <Messages ref={messages} />
 
             <div className="flex justify-center mt-2 gap-2">
 
-                {/* <form onSubmit={handleSubmit(pesquisar)}> */}
                 <form>
 
                     <div className='flex flex-row gap-2'>
-
-                        <Controller
-                            name="empresaId"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <>
-                                    <Dropdown
-                                        id={field.name}
-                                        value={field.value}
-                                        optionLabel="nome"
-                                        optionValue="id"
-                                        options={listaEmpresas}
-                                        focusInputRef={field.ref}
-                                        onChange={(e) => {
-                                            field.onChange(e.value)
-                                            handleFiltrar()
-                                        }}
-                                        className={classNames({ 'p-invalid': fieldState.error })}
-                                        placeholder="Selecione a Empresa"
-                                    // autoFocus
-                                    />
-                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
-                                </>
-                            )}
-                        />
 
                         <Controller
                             name="nome"
@@ -253,10 +207,8 @@ export default function Grid() {
                 </div>
 
                 <div className="flex justify-center mt-2 gap-2">
-                    <Paginator first={getValues('pPrimeiro')} rows={getValues('pLinhas')} totalRecords={getValues('pTotalRegistros')} rowsPerPageOptions={[10, 20, 30]} onPageChange={onPageChange} />
+                    <Paginator first={getValues('primeiro')} rows={getValues('linhas')} totalRecords={getValues('totalRegistros')} rowsPerPageOptions={[10, 20, 30]} onPageChange={onPageChange} />
                 </div>
-
-                <Divider />
 
                 <div className="flex justify-center mt-2 gap-2">
 

@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 
-import { getAll } from '@/actions/basico/usuarios_sistema'
-import { usuariosSistemaType } from '@/types/basico/usuarios_sistema'
+import { getAll } from '@/actions/basico/perfis_usuarios_sistema'
 
 import Link from 'next/link'
 
@@ -14,9 +13,9 @@ import { Column } from 'primereact/column'
 
 import { classNames } from 'primereact/utils'
 
-import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { zodResolver } from "@hookform/resolvers/zod"
 
 import { Messages } from 'primereact/messages'
 import Loading from '@/components/loading'
@@ -25,6 +24,7 @@ import PageSubTitle from '@/components/pageSubTitle'
 
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator'
 import { InputText } from 'primereact/inputtext'
+import { Divider } from 'primereact/divider'
 import { Tag } from 'primereact/tag'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -36,12 +36,13 @@ export default function Grid() {
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const urlBase = '/admin/basico/usuarios_sistema'
+    const urlBase = '/admin/cadastros/basico/perfis_usuarios_sistema'
     const pPrimeiro = Number(searchParams.get('primeiro')) || 0
     const pLinhas = Number(searchParams.get('linhas')) || 10
+
     const pNome = searchParams.get('nome') || ''
 
-    const botoesDataTable = (dados: usuariosSistemaType) => {
+    const botoesDataTable = (dados: any) => {
         return (
             <>
                 <Button type='button' icon='pi pi-pencil' size='small' onClick={() => { handleAlterar(dados.id!) }} />
@@ -49,15 +50,7 @@ export default function Grid() {
         )
     }
 
-    const formataAdministradorSistema = (dados: usuariosSistemaType) => {
-        return (
-            <>
-                {dados.administradorSistema == 'S' ? 'Sim' : 'Não'}
-            </>
-        )
-    }
-
-    const formataStatus = (dados: usuariosSistemaType) => {
+    const formataStatus = (dados: any) => {
         return (
             <>
                 <Tag value={dados.status == 'A' ? 'Ativo' : 'Inativo'} severity={dados.status == 'A' ? 'success' : 'danger'}></Tag>
@@ -156,7 +149,9 @@ export default function Grid() {
         <div className='mx-3'>
 
             <PageTitle texto="Básico" />
-            <PageSubTitle texto="Usuários do Sistema" />
+            <PageSubTitle texto="Cadastro de Perfis de Usuários do Sistema" />
+
+            <Divider />
 
             <Messages ref={messages} />
 
@@ -176,8 +171,8 @@ export default function Grid() {
                                         value={field.value}
                                         className={classNames({ 'p-invalid': fieldState.error })}
                                         onChange={(e) => field.onChange(e.target.value)}
-                                        maxLength={30}
-                                        placeholder='Nome'
+                                        maxLength={40}
+                                        autoFocus
                                     />
                                     {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
 
@@ -199,7 +194,6 @@ export default function Grid() {
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
                         <Column field="id" header="ID" sortable></Column>
                         <Column field="nome" header="Nome" sortable></Column>
-                        {/* <Column field="matriz_filial_nome" header="Matriz/Filial" sortable></Column> */}
                         <Column body={formataStatus} header="Status" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
@@ -209,8 +203,6 @@ export default function Grid() {
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
                         <Column field="id" header="ID" sortable></Column>
                         <Column field="nome" header="Nome" sortable></Column>
-                        <Column field="tbaEmpresa.nomeFantasia" header="Empresa" sortable></Column>
-                        <Column field="tbaSetor.nome" header="Setor" sortable></Column>
                         <Column body={formataStatus} header="Status" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
@@ -219,6 +211,8 @@ export default function Grid() {
                 <div className="flex justify-center mt-2 gap-2">
                     <Paginator first={getValues('primeiro')} rows={getValues('linhas')} totalRecords={getValues('totalRegistros')} rowsPerPageOptions={[10, 20, 30]} onPageChange={onPageChange} />
                 </div>
+
+                <Divider />
 
                 <div className="flex justify-center mt-2 gap-2">
 

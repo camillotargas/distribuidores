@@ -42,7 +42,7 @@ export default function Grid() {
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const urlBase = '/admin/veiculos/gerencia_saidas_retornos'
+    const urlBase = '/admin/processos/veiculos/gerencia_saidas_retornos'
     const pPrimeiro = Number(searchParams.get('primeiro')) || 0
     const pLinhas = Number(searchParams.get('linhas')) || 10
 

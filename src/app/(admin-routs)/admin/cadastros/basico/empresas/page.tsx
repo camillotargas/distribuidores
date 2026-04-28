@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 
-import { getAll } from '@/actions/veiculos/marcas_modelos'
-import { marcasType } from '@/types/veiculos/marcas_modelos'
+import { getAll } from '@/actions/basico/empresas'
+import { empresasType } from '@/types/basico/empresas'
 
 import Link from 'next/link'
 
@@ -14,9 +14,9 @@ import { Column } from 'primereact/column'
 
 import { classNames } from 'primereact/utils'
 
-import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { zodResolver } from "@hookform/resolvers/zod"
 
 import { Messages } from 'primereact/messages'
 import Loading from '@/components/loading'
@@ -26,6 +26,8 @@ import PageSubTitle from '@/components/pageSubTitle'
 import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator'
 import { InputText } from 'primereact/inputtext'
 import { Tag } from 'primereact/tag'
+import { Divider } from 'primereact/divider'
+import uTexto from '@/utils/uTexto'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function Grid() {
@@ -36,20 +38,27 @@ export default function Grid() {
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const urlBase = '/admin/veiculos/marcas_modelos'
+    const urlBase = '/admin/cadastros/basico/empresas'
     const pPrimeiro = Number(searchParams.get('primeiro')) || 0
     const pLinhas = Number(searchParams.get('linhas')) || 10
     const pNome = searchParams.get('nome') || ''
 
-    const botoesDataTable = (dados: marcasType) => {
+    const botoesDataTable = (dados: empresasType) => {
         return (
             <>
-                <Button type='button' icon='pi pi-pencil' size='small' onClick={() => { handleAlterar(dados.id!) }} />
+                <Button type='button' icon='pi pi-pencil' size='small' onClick={() => { handleAlterar(dados.id!) }} />            </>
+        )
+    }
+
+    const formataCnpj = (dados: empresasType) => {
+        return (
+            <>
+                {uTexto.formataCnpj(dados.cnpj)}
             </>
         )
     }
 
-    const formataStatus = (dados: marcasType) => {
+    const formataStatus = (dados: empresasType) => {
         return (
             <>
                 <Tag value={dados.status == 'A' ? 'Ativo' : 'Inativo'} severity={dados.status == 'A' ? 'success' : 'danger'}></Tag>
@@ -67,7 +76,7 @@ export default function Grid() {
 
     type filtrosType = z.infer<typeof filtrosSchema>
 
-    const { control, handleSubmit, formState: { errors }, getValues, setValue } = useForm<filtrosType>({
+    const { control, handleSubmit, reset, formState: { errors }, setValue, getValues } = useForm<filtrosType>({
         resolver: zodResolver(filtrosSchema),
         defaultValues: {
             primeiro: 0,
@@ -147,8 +156,10 @@ export default function Grid() {
 
         <div className='mx-3'>
 
-            <PageTitle texto="Veículos" />
-            <PageSubTitle texto="Cadastro de Marcas e Modelos" />
+            <PageTitle texto="Pesquisas" />
+            <PageSubTitle texto="Empresas" />
+
+            <Divider />
 
             <Messages ref={messages} />
 
@@ -169,7 +180,7 @@ export default function Grid() {
                                         className={classNames({ 'p-invalid': fieldState.error })}
                                         onChange={(e) => field.onChange(e.target.value)}
                                         maxLength={30}
-                                        placeholder='Nome'
+                                        placeholder='Razão Social'
                                         autoFocus
                                     />
                                     {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
@@ -191,7 +202,7 @@ export default function Grid() {
                 <div className="md:hidden">
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
                         <Column field="id" header="ID" sortable></Column>
-                        <Column field="nome" header="Nome" sortable></Column>
+                        <Column field="razaoSocial" header="Razão Social" sortable></Column>
                         <Column body={formataStatus} header="Status" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
@@ -200,7 +211,9 @@ export default function Grid() {
                 <div className="hidden md:block" >
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
                         <Column field="id" header="ID" sortable></Column>
-                        <Column field="nome" header="Nome" sortable></Column>
+                        <Column field="razaoSocial" header="Razão Social" sortable></Column>
+                        <Column field="nomeFantasia" header="Nome Fantasia" sortable></Column>
+                        <Column body={formataCnpj} header="CNPJ" sortable></Column>
                         <Column body={formataStatus} header="Status" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
@@ -209,6 +222,8 @@ export default function Grid() {
                 <div className="flex justify-center mt-2 gap-2">
                     <Paginator first={getValues('primeiro')} rows={getValues('linhas')} totalRecords={getValues('totalRegistros')} rowsPerPageOptions={[10, 20, 30]} onPageChange={onPageChange} />
                 </div>
+
+                <Divider />
 
                 <div className="flex justify-center mt-2 gap-2">
 

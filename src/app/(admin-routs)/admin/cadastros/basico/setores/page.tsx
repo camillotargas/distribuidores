@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 
-import { getAll } from '@/actions/veiculos/veiculos'
-import { veiculosType } from '@/types/veiculos/veiculos'
+import { getAll } from '@/actions/basico/setores'
+import { setoresType } from '@/types/basico/setores'
 
 import Link from 'next/link'
 
@@ -27,23 +27,31 @@ import { Paginator, PaginatorPageChangeEvent } from 'primereact/paginator'
 import { InputText } from 'primereact/inputtext'
 import { Tag } from 'primereact/tag'
 import { Divider } from 'primereact/divider'
-import uTexto from '@/utils/uTexto'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { comboBoxType } from '@/types/sistema/combobox'
+import { Dropdown } from 'primereact/dropdown'
+import { getComboBox as empresasGetComboBox } from '@/actions/basico/empresas'
+
+import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 export default function Grid() {
 
-    const [dados, setDados] = useState<any[]>([])
+    const [dados, setDados] = useState<setoresType[]>([])
     const [isLoading, setIsLoading] = useState<Boolean>(false)
     const messages = useRef<Messages>(null)
 
     const router = useRouter()
     const searchParams = useSearchParams()
-    const urlBase = '/admin/veiculos/veiculos'
+    const urlBase = '/admin/cadastros/basico/setores'
     const pPrimeiro = Number(searchParams.get('primeiro')) || 0
     const pLinhas = Number(searchParams.get('linhas')) || 10
+
+    const pEmpresaId = Number(searchParams.get('empresa_id')) || 0
     const pNome = searchParams.get('nome') || ''
 
-    const botoesDataTable = (dados: veiculosType) => {
+    const [listaEmpresas, setListaEmpresas] = useState<comboBoxType[]>([])
+
+    const botoesDataTable = (dados: setoresType) => {
         return (
             <>
                 <Button type='button' icon='pi pi-pencil' size='small' onClick={() => { handleAlterar(dados.id!) }} />
@@ -51,29 +59,7 @@ export default function Grid() {
         )
     }
 
-    const formataSituacaoManutencao = (dados: veiculosType) => {
-
-        if (dados.situacaoManutencao == 1) {
-            return <Tag value={'1-Manutenção em Dia'} severity={'success'} icon="pi pi-check"></Tag>
-        } else if (dados.situacaoManutencao == 2) {
-            return <Tag value={'2-Próximo de Manutenção Preventiva'} severity={'warning'} icon="pi pi-exclamation-triangle"></Tag>
-        } else if (dados.situacaoManutencao == 3) {
-            return <Tag value={'3-Em Manutenção Preventiva'} severity={'success'} icon="pi pi-check-circle"></Tag>
-        } else if (dados.situacaoManutencao == 4) {
-            return <Tag value={'4-Em Manutenção Corretiva'} severity={'success'} icon="pi pi-check-circle"></Tag>
-        }
-
-    }
-
-    const formataDisponivel = (dados: veiculosType) => {
-        return (
-            <>
-                <Tag value={dados.disponivel == 'S' ? 'Sim' : 'Não'} severity={dados.disponivel == 'S' ? 'success' : 'danger'}></Tag>
-            </>
-        )
-    }
-
-    const formataStatus = (dados: veiculosType) => {
+    const formataStatus = (dados: setoresType) => {
         return (
             <>
                 <Tag value={dados.status == 'A' ? 'Ativo' : 'Inativo'} severity={dados.status == 'A' ? 'success' : 'danger'}></Tag>
@@ -82,22 +68,24 @@ export default function Grid() {
     }
 
     const filtrosSchema = z.object({
-        primeiro: z.number(),
-        linhas: z.number(),
-        totalRegistros: z.number(),
-        id: z.number(),
+        pPrimeiro: z.number(),
+        pLinhas: z.number(),
+        pTotalRegistros: z.number(),
+        pId: z.number(),
+        empresaId: z.number({ required_error: "Campo Obrigatório", invalid_type_error: "Campo Obrigatório" }).min(1, { message: 'Campo Obrigatório' }),
         nome: z.string(),
     })
 
     type filtrosType = z.infer<typeof filtrosSchema>
 
-    const { control, handleSubmit, reset, formState: { errors }, setValue, getValues } = useForm<filtrosType>({
+    const { control, handleSubmit, formState: { errors }, setValue, getValues, trigger } = useForm<filtrosType>({
         resolver: zodResolver(filtrosSchema),
         defaultValues: {
-            primeiro: 0,
-            linhas: 10,
-            totalRegistros: 0,
-            id: 0,
+            pPrimeiro: 0,
+            pLinhas: 10,
+            pTotalRegistros: 0,
+            pId: 0,
+            empresaId: 0,
             nome: ''
         }
     })
@@ -105,32 +93,25 @@ export default function Grid() {
     async function filtra(filtros: filtrosType) {
 
         setIsLoading(true)
-        const resposta = await getAll(filtros.primeiro, filtros.linhas, filtros.nome)
+        const resposta = await getAll(filtros.pPrimeiro, filtros.pLinhas, filtros.nome, filtros.empresaId)
 
         if (resposta.erro !== '') {
             setIsLoading(false)
             messages.current?.clear()
             messages.current?.show({ id: '1', sticky: true, severity: 'error', summary: 'Erro', detail: resposta.erro, closable: false })
             setDados([])
-            setValue('totalRegistros', 0)
+            setValue('pTotalRegistros', 0)
         } else {
             messages.current?.clear()
             setDados(resposta.dados)
-            setValue('totalRegistros', resposta.total_registros)
+            setValue('pTotalRegistros', resposta.total_registros)
             setIsLoading(false)
         }
 
     }
 
     function ajustaUrl() {
-        router.push(urlBase + '?primeiro=' + getValues('primeiro') + '&linhas=' + getValues('linhas') + '&nome=' + getValues('nome'))
-    }
-
-    const onPageChange = (event: PaginatorPageChangeEvent) => {
-        setValue('primeiro', event.first)
-        setValue('linhas', event.rows)
-        filtra(getValues())
-        ajustaUrl()
+        router.push(urlBase + '?primeiro=' + getValues('pPrimeiro') + '&linhas=' + getValues('pLinhas') + '&empresa_id=' + getValues('empresaId') + '&nome=' + getValues('nome'))
     }
 
     function handleFiltrar() {
@@ -139,7 +120,7 @@ export default function Grid() {
     }
 
     function inclui() {
-        router.push(urlBase + '/0')
+        router.push(urlBase + '/0/' + getValues('empresaId'))
     }
 
     function handleIncluir() {
@@ -147,22 +128,35 @@ export default function Grid() {
     }
 
     function altera() {
-        router.push(urlBase + '/' + getValues('id'))
+        router.push(urlBase + '/' + getValues('pId') + '/' + getValues('empresaId'))
     }
 
     function handleAlterar(id: number) {
-        setValue('id', id)
+        setValue('pId', id)
         handleSubmit(altera)()
+    }
+
+    const onPageChange = (event: PaginatorPageChangeEvent) => {
+        setValue('pPrimeiro', event.first)
+        setValue('pLinhas', event.rows)
+        filtra(getValues())
+        ajustaUrl()
+    }
+
+    const buscaEmpresas = async () => {
+        setListaEmpresas((await empresasGetComboBox(0, '')))
     }
 
     useEffect(() => {
 
-        setValue('primeiro', pPrimeiro)
-        setValue('linhas', pLinhas)
-        setValue('totalRegistros', 0)
+        setValue('pPrimeiro', pPrimeiro)
+        setValue('pLinhas', pLinhas)
+        setValue('pTotalRegistros', 0)
 
         setValue('nome', pNome)
+        setValue('empresaId', pEmpresaId)
 
+        buscaEmpresas()
         filtra(getValues())
 
     }, [])
@@ -171,8 +165,8 @@ export default function Grid() {
 
         <div className='mx-3'>
 
-            <PageTitle texto="Veículos" />
-            <PageSubTitle texto="Veículos" />
+            <PageTitle texto="Pesquisas" />
+            <PageSubTitle texto="Setores" />
 
             <Divider />
 
@@ -180,9 +174,35 @@ export default function Grid() {
 
             <div className="flex justify-center mt-2 gap-2">
 
+                {/* <form onSubmit={handleSubmit(pesquisar)}> */}
                 <form>
 
                     <div className='flex flex-row gap-2'>
+
+                        <Controller
+                            name="empresaId"
+                            control={control}
+                            render={({ field, fieldState }) => (
+                                <>
+                                    <Dropdown
+                                        id={field.name}
+                                        value={field.value}
+                                        optionLabel="nome"
+                                        optionValue="id"
+                                        options={listaEmpresas}
+                                        focusInputRef={field.ref}
+                                        onChange={(e) => {
+                                            field.onChange(e.value)
+                                            handleFiltrar()
+                                        }}
+                                        className={classNames({ 'p-invalid': fieldState.error })}
+                                        placeholder="Selecione a Empresa"
+                                    // autoFocus
+                                    />
+                                    {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
+                                </>
+                            )}
+                        />
 
                         <Controller
                             name="nome"
@@ -195,7 +215,7 @@ export default function Grid() {
                                         className={classNames({ 'p-invalid': fieldState.error })}
                                         onChange={(e) => field.onChange(e.target.value)}
                                         maxLength={30}
-                                        placeholder='Placa'
+                                        placeholder='Nome'
                                         autoFocus
                                     />
                                     {errors[field.name] && (<small className='p-error'>{errors[field.name]?.message}</small>)}
@@ -217,8 +237,7 @@ export default function Grid() {
                 <div className="md:hidden">
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
                         <Column field="id" header="ID" sortable></Column>
-                        <Column field="placa" header="Placa" sortable></Column>
-                        <Column body={formataDisponivel} header="Disponível" sortable></Column>
+                        <Column field="nome" header="Nome" sortable></Column>
                         <Column body={formataStatus} header="Status" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
@@ -227,18 +246,14 @@ export default function Grid() {
                 <div className="hidden md:block" >
                     <DataTable value={dados} size="small" stripedRows showGridlines selectionMode="single" >
                         <Column field="id" header="ID" sortable></Column>
-                        <Column field="tveMarca.nome" header="Marca" sortable></Column>
-                        <Column field="tveModelo.nome" header="Modelo" sortable></Column>
-                        <Column field="placa" header="Placa" sortable></Column>
-                        <Column body={formataSituacaoManutencao} header="Situação Manutenção" sortable></Column>
-                        <Column body={formataDisponivel} header="Disponível" sortable></Column>
+                        <Column field="nome" header="Nome" sortable></Column>
                         <Column body={formataStatus} header="Status" sortable></Column>
                         <Column body={botoesDataTable} exportable={false}></Column>
                     </DataTable>
                 </div>
 
                 <div className="flex justify-center mt-2 gap-2">
-                    <Paginator first={getValues('primeiro')} rows={getValues('linhas')} totalRecords={getValues('totalRegistros')} rowsPerPageOptions={[10, 20, 30]} onPageChange={onPageChange} />
+                    <Paginator first={getValues('pPrimeiro')} rows={getValues('pLinhas')} totalRecords={getValues('pTotalRegistros')} rowsPerPageOptions={[10, 20, 30]} onPageChange={onPageChange} />
                 </div>
 
                 <Divider />
